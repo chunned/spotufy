@@ -15,7 +15,7 @@ def requestApiToken():
         if not apiSecrets:
             raise ValueError
     except ValueError:
-        print('Reading .env file failed - no data read.')
+        print('ERROR: Reading .env file failed - no data read.')
         print('Ensure the .env file exists in the project root directory and contains the correct values')
         print('CLIENT_ID=<client id>')
         print('CLIENT_SECRET=<client secret>')
@@ -32,7 +32,7 @@ def requestApiToken():
         response = response.json()
         return response["access_token"]
     except KeyError:
-        print('No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
+        print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         exit(1)
 
 
@@ -53,10 +53,10 @@ def searchArtists(apiToken, artist):
         if response['artists']['total'] == 0:
             raise ValueError("No search results found!")
     except requests.HTTPError as e:   # Catch non-200 status codes
-        print(f"Error in API response code: {e}")
+        print(f"ERROR: Error in API response code: {e}")
         exit(1)
     except ValueError as e:
-        print(f"Error in search results: {e}")
+        print(f"ERROR: Error in search results: {e}")
         exit(1)
 
     # Construct search result output
@@ -89,4 +89,15 @@ PHOTO: {artists[i]['imageUrl']}
 ---
 """)
 
+    userChoice = input("Enter the result you would like to select: ")
+    try:
+        userChoice = int(userChoice)
+    except ValueError as e:
+        print(f'ERROR: Invalid input value. Please try again, entering an integer. {e}')
+        exit(1)
 
+    try:
+        return artists[userChoice]
+    except IndexError as e:
+        print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
+              "results.")
