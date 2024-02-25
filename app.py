@@ -11,9 +11,15 @@ def home():
 def search_artist():
     if request.method == "POST":
         name = request.form.get("search_artist")
-        token = main.requestApiToken()
-        get_artists = main.searchArtists(token, name)
-    return render_template("search.html",title="Search Artist",artists=get_artists)
+        print(name)
+        if name == "": 
+            return render_template("404.html",title="404 Not Found")
+        try: 
+            token = main.requestApiToken()
+            get_artists = main.searchArtists(token, name)
+        except: 
+            return render_template("404.html",title="404 Not Found")
+        return render_template("search.html",title="Search Artist",artists=get_artists)
 
 @app.route("/login",methods=["POST","GET"])
 def addUserKey():
@@ -24,4 +30,4 @@ def addUserKey():
         return render_template("login.html")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9191)
+    app.run(host="192.168.2.252", debug=True, port=9191)

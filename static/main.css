@@ -1,19 +1,20 @@
 body {
   font-family: 'Nunito', sans-serif;
   color: #e0dddd;
-}
+} /* Styling for the main body */
 
 html body { 
   background-color: rgb(36, 35, 35);
-}
+} /* Styling for the html main body for bootstrap */
+
 .navbar {
-  padding-left: 5rem; 
-  padding-right: 5rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
   margin: 5px;
   background: rgb(117, 195, 193);
   border-radius: 15px;
   margin-bottom: 3%;
-}
+} /* bootstrap navbar, colors, etc */
 a {
   outline:0;
 }
@@ -21,26 +22,31 @@ a {
   background-color: #fefffe;
   color:black;
   border-radius: 10px;
-
-}
-
-.forms{
-  color: #e0dddd;
-}
+} /* change hovor color  */
 
 .form-login {
   margin: 0 auto;
   width: 85%; 
   padding-top: 2%;
-}
-
+} 
 .main_body { 
   padding-top: 1.25rem;
   width: 85%; 
   margin: 0 auto; 
-}
+  position: relative; 
+} /* main text body styling for pages */
 
-.artist_image { 
-  display: inline-block;
-  margin: 0 auto;
-}
+.artist_output {
+  display: flex;
+  align-items: flex-start;
+} /* make the picture and ouput display side by side */
+
+.text {
+  flex: 1; 
+} /* keep text to left */
+
+.artist_image {
+  flex: 1; 
+  max-width: 22%;
+  height: auto;
+} /* keep image to right */
