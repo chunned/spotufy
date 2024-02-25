@@ -1,3 +1,6 @@
 .env
 .idea
 test.py
+__pycache__
+virtual-env/
+

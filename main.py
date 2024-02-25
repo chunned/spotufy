@@ -5,7 +5,6 @@ import json
 
 APIURL = "https://api.spotify.com/v1"
 
-
 def requestApiToken():
     # Function to request an API token from Spotify - valid for 1hr
 
@@ -88,16 +87,4 @@ PHOTO: {artists[i]['imageUrl']}
 
 ---
 """)
-
-    userChoice = input("Enter the result you would like to select: ")
-    try:
-        userChoice = int(userChoice)
-    except ValueError as e:
-        print(f'ERROR: Invalid input value. Please try again, entering an integer. {e}')
-        exit(1)
-
-    try:
-        return artists[userChoice]
-    except IndexError as e:
-        print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
-              "results.")
+    return artists

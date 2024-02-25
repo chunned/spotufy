@@ -1,0 +1,46 @@
+body {
+  font-family: 'Nunito', sans-serif;
+  color: #e0dddd;
+}
+
+html body { 
+  background-color: rgb(36, 35, 35);
+}
+.navbar {
+  padding-left: 5rem; 
+  padding-right: 5rem;
+  margin: 5px;
+  background: rgb(117, 195, 193);
+  border-radius: 15px;
+  margin-bottom: 3%;
+}
+a {
+  outline:0;
+}
+.nav-link:hover{
+  background-color: #fefffe;
+  color:black;
+  border-radius: 10px;
+
+}
+
+.forms{
+  color: #e0dddd;
+}
+
+.form-login {
+  margin: 0 auto;
+  width: 85%; 
+  padding-top: 2%;
+}
+
+.main_body { 
+  padding-top: 1.25rem;
+  width: 85%; 
+  margin: 0 auto; 
+}
+
+.artist_image { 
+  display: inline-block;
+  margin: 0 auto;
+}

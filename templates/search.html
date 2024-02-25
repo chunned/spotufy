@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="main_body">    
+        <h1>Artists Data</h1>
+        {% for artist in artists %}
+            <div>
+                <p>RESULT #{{ loop.index }}</p>
+                <p>NAME: {{ artist['name'] }}</p>
+                <p>URL:  <a href="{{ artist['url'] }}"> {{ artist['url'] }} </a> </p>
+                <p>FOLLOWERS: {{ artist['followers'] }}</p>
+                <p>GENRE(s): {{ artist['genres'] }}</p>
+                <img src="{{ artist['imageUrl'] }}" alt="Artist Image" class="artist_image">
+            </div>
+            <hr>
+        {% endfor %}
+    </div> 
+{% endblock content %}
