@@ -5,6 +5,7 @@ import json
 
 APIURL = 'https://api.spotify.com/v1'
 
+
 def makeApiCall(url, method, headers=None, paylode=None):
     # Generalized function to make any and all API requests as needed by the application
 
@@ -15,7 +16,9 @@ def makeApiCall(url, method, headers=None, paylode=None):
     except requests.exceptions.HTTPError as e:
         print(f"ERROR: Error in API response code: {e}")
         return None
-    else: 
+    except requests.exceptions.MissingSchema as e:
+        print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
+    else:
         return response.json() if response.text else None
 
 
@@ -28,10 +31,10 @@ def requestApiToken():
         if not apiSecrets:
             raise ValueError
     except ValueError:
-        print('Reading .env file failed - no data read.\n'+
-        'Ensure the .env file exists in the project root directory and contains the correct values\n'+
-        'CLIENT_ID=<client id>\n'+
-        'CLIENT_SECRET=<client secret>', end="")
+        print('Reading .env file failed - no data read.\n' +
+              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
+              'CLIENT_ID=<client id>\n' +
+              'CLIENT_SECRET=<client secret>', end="")
         exit(1)
 
     try:
@@ -90,8 +93,10 @@ def searchArtists(apiToken, artist):
     # Iterate through artists, prompt user to select the correct one
     for i in range(1, len(artists)):
         print(f"RESULT #{i}\n"
-            f"NAME: {artists[i]['name']}\n"
-            f"URL: {artists[i]['url']}\n"
-            f"FOLLOWERS: {artists[i]['followers']}\n"
-            f"GENRE(s): {artists[i]['genres']}\n"
-            f"PHOTO: {artists[i]['imageUrl']}\n---")
+              f"NAME: {artists[i]['name']}\n"
+              f"URL: {artists[i]['url']}\n"
+              f"FOLLOWERS: {artists[i]['followers']}\n"
+              f"GENRE(s): {artists[i]['genres']}\n"
+              f"PHOTO: {artists[i]['imageUrl']}\n---")
+
+
