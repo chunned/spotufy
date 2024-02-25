@@ -32,7 +32,7 @@ def requestApiToken():
         response = response.json()
         return response["access_token"]
     except KeyError:
-        print('No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
+        print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         exit(1)
 
 
@@ -53,10 +53,10 @@ def searchArtists(apiToken, artist):
         if response['artists']['total'] == 0:
             raise ValueError("No search results found!")
     except requests.HTTPError as e:   # Catch non-200 status codes
-        print(f"Error in API response code: {e}")
+        print(f"ERROR: Error in API response code: {e}")
         exit(1)
     except ValueError as e:
-        print(f"Error in search results: {e}")
+        print(f"ERROR: Error in search results: {e}")
         exit(1)
 
     # Construct search result output
