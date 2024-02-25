@@ -15,10 +15,10 @@ def requestApiToken():
         if not apiSecrets:
             raise ValueError
     except ValueError:
-        print('Reading .env file failed - no data read.')
-        print('Ensure the .env file exists in the project root directory and contains the correct values')
-        print('CLIENT_ID=<client id>')
-        print('CLIENT_SECRET=<client secret>')
+        print('Reading .env file failed - no data read.\n'+
+        'Ensure the .env file exists in the project root directory and contains the correct values\n'+
+        'CLIENT_ID=<client id>\n'+
+        'CLIENT_SECRET=<client secret>', end="")
         exit(1)
 
     try:
@@ -79,14 +79,9 @@ def searchArtists(apiToken, artist):
     print("Displaying search results. Please select the matching artist.")
     # Iterate through artists, prompt user to select the correct one
     for i in range(1, len(artists)):
-        print(f"""RESULT #{i}
-NAME: {artists[i]['name']}
-URL: {artists[i]['url']}
-FOLLOWERS: {artists[i]['followers']}
-GENRE(s): {artists[i]['genres']}
-PHOTO: {artists[i]['imageUrl']}
-
----
-""")
-
-
+        print(f"RESULT #{i}\n"
+            f"NAME: {artists[i]['name']}\n"
+            f"URL: {artists[i]['url']}\n"
+            f"FOLLOWERS: {artists[i]['followers']}\n"
+            f"GENRE(s): {artists[i]['genres']}\n"
+            f"PHOTO: {artists[i]['imageUrl']}\n---")
