@@ -3,7 +3,20 @@ import dotenv
 import urllib.parse
 import json
 
-APIURL = "https://api.spotify.com/v1"
+APIURL = 'https://api.spotify.com/v1'
+
+def makeApiCall(url, method, headers=None, paylode=None):
+    # Generalized function to make any and all API requests as needed by the application
+
+    # Send the request with the passed in parameters
+    try:
+        response = requests.request(method, url, headers=headers, data=paylode)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"ERROR: Error in API response code: {e}")
+        return None
+    else: 
+        return response.json() if response.text else None
 
 
 def requestApiToken():
@@ -28,8 +41,7 @@ def requestApiToken():
                    "client_id": apiSecrets["CLIENT_ID"],
                    "client_secret": apiSecrets["CLIENT_SECRET"]}
 
-        response = requests.post(apiUrl, headers=apiHeaders, data=apiData)
-        response = response.json()
+        response = makeApiCall(apiUrl, "POST", headers=apiHeaders, paylode=apiData)
         return response["access_token"]
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
@@ -45,16 +57,14 @@ def searchArtists(apiToken, artist):
 
     # Send the query - will return a list of matching artists
     try:
-        response = requests.get(url, headers=headers)
-        # If HTTP status code in response is anything other than 200 OK, raise an error
-        response.raise_for_status()
-        response = response.json()
+        response = makeApiCall(url, "GET", headers=headers)
+
+        if not response:
+            print("ERROR: Response from API request is empty")
+            exit(1)
         # Check if any artists were found during search
         if response['artists']['total'] == 0:
             raise ValueError("No search results found!")
-    except requests.HTTPError as e:   # Catch non-200 status codes
-        print(f"ERROR: Error in API response code: {e}")
-        exit(1)
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         exit(1)
