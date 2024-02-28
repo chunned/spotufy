@@ -99,4 +99,16 @@ def searchArtists(apiToken, artist):
               f"GENRE(s): {artists[i]['genres']}\n"
               f"PHOTO: {artists[i]['imageUrl']}\n---")
 
+    userChoice = input("Enter the result you would like to select: ")
+    try:
+        userChoice = int(userChoice)
+    except ValueError as e:
+        print(f'ERROR: Invalid input value. Please try again, entering an integer. {e}')
+        return None
 
+    try:
+        return artists[userChoice]
+    except IndexError as e:
+        print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
+              "results.")
+        return None
