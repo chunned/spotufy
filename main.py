@@ -162,7 +162,3 @@ def getArtistReleases(apiToken, artist):
     return releases
 
 
-token = requestApiToken()
-art = searchArtists(token, 'Conway the Machine')
-
-getArtistReleases(token, art)
