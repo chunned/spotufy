@@ -46,7 +46,7 @@ a {
 } /* keep text to left */
 
 .artist_image {
-  flex: 1; 
+  flex: 2; 
   max-width: 22%;
   height: auto;
 } /* keep image to right */

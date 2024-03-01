@@ -1,17 +1,19 @@
 {% extends "layout.html" %}
 {% block content %}
     <div class="main_body">    
-        <h1>Artists Data</h1>
-        {% for artist in artists %}
+        <h1> Top Matches for {{matched_artist}} </h1>
+        <!--- for loop to print out all the elements from the artists list, [1:] indicates that it should start at index 1-->
+        <hr>
+        {% for artist in artists[1:] %} 
         <div class="artist_output">
             <div class="text">
-                <p>RESULT #{{ loop.index }}</p>
-                <p>NAME: {{ artist['name'] }}</p>
-                <p>URL:  <a href="{{ artist['url'] }}"> {{ artist['url'] }} </a> </p>
-                <p>FOLLOWERS: {{ artist['followers'] }}</p>
-                <p>GENRE(s): {{ artist['genres'] }}</p>
+                <p>Result #{{ loop.index}}</p> 
+                <p>Name: {{ artist['name'] }}</p>
+                <p>Followers: {{ artist['followers'] }}</p>
+                <p>Genre(s): {{ artist['genres'] }}</p>
+                <p><a href="{{ artist['url'] }}"> {{ artist['url'] }} </a> </p>
             </div>
-            <img src="{{ artist['imageUrl'] }}" alt="Artist Image" class="artist_image">
+            <img src="{{ artist['imageUrl'] }}" alt=" 404 - Image Not Found" class="artist_image">
         </div>
         <hr>
         {% endfor %}
