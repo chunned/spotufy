@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+    
+    <div class="form-login">   
+        <h1> Search Track by Artist Name and Track Name </h1>
+        <form action="/get_track_details" method="post"> 
+            <p> Enter Artist Name :   </p>
+            <p> <input type="text" name="search_details_artist" style="border-radius: 8px;" placeholder="Enter artist name"/> </p>
+            <p> Enter Track Name :   </p>
+            <p> <input type="text" name="search_details_track" style="border-radius: 8px;" placeholder="Enter artist name"/> </p>
+            <p> <input type="submit" /></p>
+        </form>
+    </div>  
+{% endblock content %}

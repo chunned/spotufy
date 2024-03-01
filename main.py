@@ -98,6 +98,49 @@ def searchArtists(apiToken, artist):
             f"PHOTO: {artists[i]['imageUrl']}\n---")
     return artists
 
+def searchSongDetails(apiToken, track, artist):
+    if track == "":
+        print("ERROR: Track input is empty")
+        return None
+    if artist == "":
+        print("ERROR: Artist input is empty")
+        return None
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {apiToken}"}
+
+    # Construct the query URL
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    response = makeApiCall(url, "GET", headers=headers)
+    if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+    if response["tracks"]["items"] == []:
+        print("ERROR: No track matching search creteria found")
+        return None
+    # Parse API response and store track information
+    track = response["tracks"]["items"][0]
+    trackResults = {
+        "id" : track["id"],
+        "name": track["name"],
+        "album": track["album"]["name"],
+        "artist": track["album"]["artists"][0]["name"],
+        "duration": str(round(track["duration_ms"] * (10**-3),0)),
+        "released": track["album"]["release_date"],
+        "url": track["external_urls"]["spotify"],
+    }
+    try:
+        trackResults['image'] = track["album"]["images"][1]["url"]
+    except IndexError:
+        trackResults['image'] = "Image not found"
+    for i in trackResults.values(): #remove print later 
+        print(i)
+    return trackResults
+    
+# Example of working URI for searching a song: 
+# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5   
+
 def get_top_tracks(apiToken,artist_name):
     artists_got = searchArtists(apiToken,artist_name)
     artist_id = artists_got[1]["id"]
@@ -121,7 +164,7 @@ def get_top_tracks(apiToken,artist_name):
         print(f"ERROR: Error in search results: {e}")
         exit(1)
 
-    tracks = []
+    top_tracks = []
     for track in response['tracks']:
         artistResult = {
             "name": track["name"],
@@ -131,15 +174,15 @@ def get_top_tracks(apiToken,artist_name):
             "songUrl" : track["external_urls"]["spotify"],
             "popularity": track["popularity"]
         }
-        tracks.append(artistResult)
+        top_tracks.append(artistResult)
 
-    for i in range(1, len(tracks)):
+    for i in range(1, len(top_tracks)):
         print(
-              f"name: {tracks[i]['name']}\n"
-              f"album: {tracks[i]['album']}\n"
-              f"albumDate: {tracks[i]['albumDate']}\n"
-              f"albumImage: {tracks[i]['albumImage']}\n"
-              f"songUrl: {tracks[i]['songUrl']}\n"
-              f"popularity: {tracks[i]['popularity']}\n"
+              f"name: {top_tracks[i]['name']}\n"
+              f"album: {top_tracks[i]['album']}\n"
+              f"albumDate: {top_tracks[i]['albumDate']}\n"
+              f"albumImage: {top_tracks[i]['albumImage']}\n"
+              f"songUrl: {top_tracks[i]['songUrl']}\n"
+              f"popularity: {top_tracks[i]['popularity']}\n"
         )
-    return tracks
+    return top_tracks

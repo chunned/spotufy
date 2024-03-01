@@ -11,6 +11,11 @@ def home():
 def tracks():
     return render_template("tracks.html",title="Search Tracks")
 
+@app.route("/track_details")
+def search_tracks():
+    return render_template("track_details.html",title="Song Details")
+
+
 @app.route("/search",methods=["POST","GET"])
 def search_artist():
     if request.method == "POST":
@@ -27,7 +32,7 @@ def search_artist():
 
 
 
-@app.route("/get_tracks",methods=["POST","GET"])
+@app.route("/get_top_tracks",methods=["POST","GET"])
 def get_tracks():
     if request.method == "POST":
         top_tracks = request.form.get("search_tracks")
@@ -39,7 +44,21 @@ def get_tracks():
         except: 
             return render_template("404.html",title="404 Not Found")
         return render_template("top_tracks.html",title="Search Tracks",tracks=get_tracks,artist_title=top_tracks)
-        
+
+
+@app.route("/get_track_details",methods=["POST","GET"])
+def get_track_details():
+    if request.method == "POST":
+        track_artist = request.form.get("search_details_artist")
+        track_name = request.form.get("search_details_track")
+        token = main.requestApiToken()
+        get_tracks_details = main.searchSongDetails(token, track_name, track_artist)
+        print(get_tracks_details)
+        if get_tracks_details == None:
+            return render_template("404.html",title="404 Not Found")
+        return render_template("get_track_details.html", title="Search Tracks", tracks=get_tracks_details, artist=track_artist, name=track_name)
+    
+
 
 @app.route("/login",methods=["POST","GET"])
 def addUserKey():
