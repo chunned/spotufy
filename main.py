@@ -95,3 +95,45 @@ def searchArtists(apiToken, artist):
             f"FOLLOWERS: {artists[i]['followers']}\n"
             f"GENRE(s): {artists[i]['genres']}\n"
             f"PHOTO: {artists[i]['imageUrl']}\n---")
+
+def searchSongDetails(apiToken, track, artist):
+    if track == "":
+        print("ERROR: Track input is empty")
+        return None
+    if artist == "":
+        print("ERROR: Artist input is empty")
+        return None
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {apiToken}"}
+
+    # Construct the query URL
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    response = makeApiCall(url, "GET", headers=headers)
+    if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+    if response["tracks"]["items"] == []:
+        print("ERROR: No track matching search creteria found")
+        return None
+    # Parse API response and store track information
+    track = response["tracks"]["items"][0]
+    trackResults = {
+        "name": track["name"],
+        "album": track["album"]["name"],
+        "artist": track["album"]["artists"][0]["name"],
+        "duration": track["duration_ms"] * (10**-3),
+        "released": track["album"]["release_date"],
+        "url": track["external_urls"]["spotify"],
+    }
+    try:
+        trackResults['image'] = track["album"]["images"][1]["url"]
+    except IndexError:
+        trackResults['image'] = "Image not found"
+    for i in trackResults.values(): #remove print later 
+        print(i)
+    return 
+    
+# Example of working URI for searching a song: 
+# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5   
