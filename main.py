@@ -112,3 +112,59 @@ def searchArtists(apiToken, artist):
         print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
               "results.")
         return None
+
+
+def getTrackRecs(apiToken, track, artist):
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    # Construct the query URL to search for specified track by specified artist
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if response["tracks"]["items"] == []:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+    
+    # Parse API response and stores track id
+    track = response["tracks"]["items"][0]
+    trackID = track["id"]
+
+    # Construct the query URL to search for the top 5 reccomended tracks based on specified track id
+    rec_query = urllib.parse.quote(trackID)
+    url = f"{APIURL}/recommendations?limit=5&seed_tracks={rec_query}"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if response["tracks"][0] == []:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+    
+    recs = ['']  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
+    for rec in response['tracks']:
+        #stores track id, album, artist and album art in dictionary
+        recsResult = {
+            "id": rec["id"],
+            "name": rec["name"],
+            "album": rec["album"]["name"],
+            "artist": rec["artists"][0]["name"]
+        }
+        try:
+            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+        except IndexError:
+            recsResult['imageUrl'] = "Image not found"
+        recs.append(recsResult)
+    return recs
+    
