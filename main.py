@@ -51,10 +51,10 @@ def requestApiToken():
         return None
 
 
-def searchArtists(apiToken, artist):
+def searchArtists(apiToken, inputArtist):
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
-    query = urllib.parse.quote(artist)
+    query = urllib.parse.quote(inputArtist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
 
@@ -74,7 +74,8 @@ def searchArtists(apiToken, artist):
 
     # Construct search result output
     artists = ['']  # Will hold the artist results - insert one null value at index 0 for easier array access
-    for artist in response['artists']['items']:
+    # For details on enumerate() see https://realpython.com/python-enumerate/
+    for i, artist in enumerate(response['artists']['items']):
         artistResult = {
             "name": artist["name"],
             "url": artist["external_urls"]["spotify"],
@@ -87,8 +88,13 @@ def searchArtists(apiToken, artist):
             artistResult['imageUrl'] = artist["images"][0]["url"]
         except IndexError:
             artistResult['imageUrl'] = "Image not found"
-
-        artists.append(artistResult)
+        finally:
+            if i == 0 and artistResult['name'].lower() == inputArtist.lower():
+                # If the first result matches exactly the input search string, we can assume it is the correct
+                # artist, so return it. Otherwise, iterate through results
+                return artistResult
+            else:
+                artists.append(artistResult)
 
     print("Displaying search results. Please select the matching artist.")
     # Iterate through artists, prompt user to select the correct one
