@@ -59,7 +59,7 @@ def searchArtists(apiToken, artist):
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
 
-    artist = re.sub('[^0-9a-zA-Z ]', '', artist)
+    artist = parseInput(artist)
 
     # Send the query - will return a list of matching artists
     try:
