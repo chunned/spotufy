@@ -144,7 +144,6 @@ def searchSongDetails(apiToken, track, artist):
         return None
     # Parse API response and store track information
     track = response["tracks"]["items"][0]
-    print(json.dumps(track, indent=2))
     trackResults = {
         "name": track["name"],
         "album": track["album"]["name"],
