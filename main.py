@@ -1,6 +1,7 @@
 import requests
 import dotenv
 import urllib.parse
+import re
 import json
 
 APIURL = 'https://api.spotify.com/v1'
@@ -58,6 +59,8 @@ def searchArtists(apiToken, artist):
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
 
+    artist = re.sub('[^0-9a-zA-Z ]', '', artist)
+
     # Send the query - will return a list of matching artists
     try:
         response = makeApiCall(url, "GET", headers=headers)
@@ -113,6 +116,7 @@ def searchArtists(apiToken, artist):
               "results.")
         return None
 
+
 def searchSongDetails(apiToken, track, artist):
     if track == "":
         print("ERROR: Track input is empty")
@@ -120,6 +124,10 @@ def searchSongDetails(apiToken, track, artist):
     if artist == "":
         print("ERROR: Artist input is empty")
         return None
+
+    track = parseInput(track)
+    artist = parseInput(artist)
+
     # URL encode track and artist strings to ensure request executes properly
     track_query = urllib.parse.quote(track)
     artist_query = urllib.parse.quote(artist)
@@ -129,18 +137,19 @@ def searchSongDetails(apiToken, track, artist):
     url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
     response = makeApiCall(url, "GET", headers=headers)
     if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-    if response["tracks"]["items"] == []:
-        print("ERROR: No track matching search creteria found")
+        print("ERROR: Response from API request is empty")
+        return None
+    if not response["tracks"]["items"]:
+        print("ERROR: No track matching search criteria found")
         return None
     # Parse API response and store track information
     track = response["tracks"]["items"][0]
+    print(json.dumps(track, indent=2))
     trackResults = {
         "name": track["name"],
         "album": track["album"]["name"],
         "artist": track["album"]["artists"][0]["name"],
-        "duration": track["duration_ms"] * (10**-3),
+        "duration": track["duration_ms"] * (10 ** -3),
         "released": track["album"]["release_date"],
         "url": track["external_urls"]["spotify"],
     }
@@ -148,9 +157,18 @@ def searchSongDetails(apiToken, track, artist):
         trackResults['image'] = track["album"]["images"][1]["url"]
     except IndexError:
         trackResults['image'] = "Image not found"
-    for i in trackResults.values(): #remove print later 
-        print(i)
-    return 
-    
+    return trackResults
+
 # Example of working URI for searching a song: 
-# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5   
+# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5
+
+
+def parseInput(string):
+    # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
+    # Solution from https://stackoverflow.com/questions/3939361/remove-specific-characters-from-a-string-in-python
+    return re.sub('[^0-9a-zA-Z ]', '', string)
+
+
+tok = requestApiToken()
+song = searchSongDetails(tok, "Thief's Theme", "N@#$@#$@#$a%(@$)@#%s")
+#print(json.dumps(song, indent=2))
