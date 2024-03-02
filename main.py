@@ -164,10 +164,7 @@ def searchSongDetails(apiToken, track, artist):
 
 def parseInput(string):
     # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
-    # Solution from https://stackoverflow.com/questions/3939361/remove-specific-characters-from-a-string-in-python
+    # Solution from https://stackoverflow.com/a/46414390
     return re.sub('[^0-9a-zA-Z ]', '', string)
 
 
-tok = requestApiToken()
-song = searchSongDetails(tok, "Thief's Theme", "N@#$@#$@#$a%(@$)@#%s")
-#print(json.dumps(song, indent=2))
