@@ -15,8 +15,11 @@ def tracks():
 def search_tracks():
     return render_template("track_details.html",title="Song Details")
 
+@app.route("/search")
+def search():
+    return render_template("search.html",title="Song Details")
 
-@app.route("/search",methods=["POST","GET"])
+@app.route("/get_search",methods=["POST","GET"])
 def search_artist():
     if request.method == "POST":
         name = request.form.get("search_artist")
@@ -28,9 +31,7 @@ def search_artist():
             get_artists = main.searchArtists(token, name)
         except: 
             return render_template("404.html",title="404 Not Found")
-        return render_template("search.html",title="Search Artist",artists=get_artists,matched_artist=name)
-
-
+        return render_template("get_search.html",title="Search Artist",artists=get_artists,matched_artist=name)
 
 @app.route("/get_top_tracks",methods=["POST","GET"])
 def get_tracks():

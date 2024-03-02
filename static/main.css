@@ -1,28 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 body {
-  font-family: 'Nunito', sans-serif;
+  font-family: "Inter", sans-serif;
   color: #e0dddd;
 } /* Styling for the main body */
 
 html body { 
-  background-color: rgb(36, 35, 35);
+  background-color: rgb(26, 25, 25);
 } /* Styling for the html main body for bootstrap */
 
 .navbar {
+  font-family: "Inter", sans-serif;
   padding-left: 3rem;
   padding-right: 3rem;
   margin: 5px;
-  background: rgb(117, 195, 193);
+  background: #2f383e;
   border-radius: 15px;
   margin-bottom: 3%;
+  color: white;
+  font-size: 17px;
 } /* bootstrap navbar, colors, etc */
 a {
   outline:0;
 }
 .nav-link:hover{
-  background-color: #fefffe;
-  color:black;
+  background-color: #49cf49;
+  color:rgb(0, 0, 0) !important;
   border-radius: 10px;
 } /* change hovor color  */
+
 
 .form-login {
   margin: 0 auto;
@@ -50,3 +56,23 @@ a {
   max-width: 22%;
   height: auto;
 } /* keep image to right */
+
+.spotufy {
+  padding-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  margin-top: 15%;
+}
+.spotufy h1 { 
+  font-size: 150px;
+}
+.spotufy_body {
+  display: flex;
+  justify-content: center;
+  font-family: "Inter", sans-serif;
+  color:white;
+}
+
+span {
+  color: white;
+}

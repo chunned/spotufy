@@ -4,14 +4,14 @@ SpOTUfy is an application for the purpose of providing greater value to the ever
 
 # Features Roadmap
 ## Complete
+- Search song details
+- Get playlist of artist's top tracks
 - 
 ## To Do
-- Search song details
 - Search artist information
 - Show recommended songs based on user activity
 - Get song lyrics
 - Get related artists
-- Get playlist of artist's top tracks
 - Search artist discography
 ## Backlog
 - Get artist new/upcoming releases
