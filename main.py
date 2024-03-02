@@ -5,6 +5,7 @@ import json
 
 APIURL = 'https://api.spotify.com/v1'
 
+
 def makeApiCall(url, method, headers=None, paylode=None):
     # Generalized function to make any and all API requests as needed by the application
 
@@ -15,7 +16,9 @@ def makeApiCall(url, method, headers=None, paylode=None):
     except requests.exceptions.HTTPError as e:
         print(f"ERROR: Error in API response code: {e}")
         return None
-    else: 
+    except requests.exceptions.MissingSchema as e:
+        print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
+    else:
         return response.json() if response.text else None
 
 
@@ -28,11 +31,11 @@ def requestApiToken():
         if not apiSecrets:
             raise ValueError
     except ValueError:
-        print('Reading .env file failed - no data read.\n'+
-        'Ensure the .env file exists in the project root directory and contains the correct values\n'+
-        'CLIENT_ID=<client id>\n'+
-        'CLIENT_SECRET=<client secret>', end="")
-        exit(1)
+        print('Reading .env file failed - no data read.\n' +
+              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
+              'CLIENT_ID=<client id>\n' +
+              'CLIENT_SECRET=<client secret>', end="")
+        return None
 
     try:
         apiUrl = "https://accounts.spotify.com/api/token"
@@ -45,7 +48,7 @@ def requestApiToken():
         return response["access_token"]
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
-        exit(1)
+        return None
 
 
 def searchArtists(apiToken, artist):
@@ -61,13 +64,13 @@ def searchArtists(apiToken, artist):
 
         if not response:
             print("ERROR: Response from API request is empty")
-            exit(1)
+            return None
         # Check if any artists were found during search
         if response['artists']['total'] == 0:
             raise ValueError("No search results found!")
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
-        exit(1)
+        return None
 
     # Construct search result output
     artists = ['']  # Will hold the artist results - insert one null value at index 0 for easier array access
@@ -90,11 +93,25 @@ def searchArtists(apiToken, artist):
     # Iterate through artists, prompt user to select the correct one
     for i in range(1, len(artists)):
         print(f"RESULT #{i}\n"
-            f"NAME: {artists[i]['name']}\n"
-            f"URL: {artists[i]['url']}\n"
-            f"FOLLOWERS: {artists[i]['followers']}\n"
-            f"GENRE(s): {artists[i]['genres']}\n"
-            f"PHOTO: {artists[i]['imageUrl']}\n---")
+              f"NAME: {artists[i]['name']}\n"
+              f"URL: {artists[i]['url']}\n"
+              f"FOLLOWERS: {artists[i]['followers']}\n"
+              f"GENRE(s): {artists[i]['genres']}\n"
+              f"PHOTO: {artists[i]['imageUrl']}\n---")
+
+    userChoice = input("Enter the result you would like to select: ")
+    try:
+        userChoice = int(userChoice)
+    except ValueError as e:
+        print(f'ERROR: Invalid input value. Please try again, entering an integer. {e}')
+        return None
+
+    try:
+        return artists[userChoice]
+    except IndexError as e:
+        print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
+              "results.")
+        return None
 
 def searchSongDetails(apiToken, track, artist):
     if track == "":
