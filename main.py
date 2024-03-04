@@ -199,11 +199,3 @@ def getRelatedArtists(apiToken, artistID):
 
     return relatedArtists
 
-
-name = "Al Green"
-token = requestApiToken()
-artist = searchArtists(token, name)
-
-x = getRelatedArtists(token, artist['id'])
-for i in x:
-    print(i)
