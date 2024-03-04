@@ -2,6 +2,8 @@ import requests
 import dotenv
 import urllib.parse
 import json
+import base64
+import webbrowser
 
 APIURL = 'https://api.spotify.com/v1'
 
@@ -37,15 +39,42 @@ def requestApiToken():
               'CLIENT_SECRET=<client secret>', end="")
         return None
 
+    client_id = apiSecrets["CLIENT_ID"]
+    client_secret = apiSecrets["CLIENT_SECRET"]
+    try:
+        # Authorize with relevant scopes
+        # Authorization method adapted from https://python.plainenglish.io/bored-of-libraries-heres-how-to-connect-to-the-spotify-api-using-pure-python-bd31e9e3d88a
+        scope = 'playlist-modify-public'
+        params = {
+            'response_type': 'code',
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': 'https://chunned.github.io/test/login-success'
+        }
+        webbrowser.open("https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params))
+        code = input("Enter the code from the end of the URL: ")
+        if len(code) != 224:
+            raise ValueError
+    except ValueError:
+        print("Invalid authorization code length. Please try again and make sure you copy the full code.")
+        return None
+
+
     try:
         apiUrl = "https://accounts.spotify.com/api/token"
-        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded"}
-        apiData = {"grant_type": "client_credentials",
-                   "client_id": apiSecrets["CLIENT_ID"],
-                   "client_secret": apiSecrets["CLIENT_SECRET"]}
+        encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+                      "Authorization": "Basic " + encodedCreds}
+        apiData = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "https://chunned.github.io/test/login-success"
+        }
 
-        response = makeApiCall(apiUrl, "POST", headers=apiHeaders, paylode=apiData)
-        return response["access_token"]
+        resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+        # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+        data = json.loads(resp.content.decode('utf-8'))
+        return data["access_token"]
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         return None
