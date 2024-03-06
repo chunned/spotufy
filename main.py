@@ -52,10 +52,10 @@ def requestApiToken():
         return None
 
 
-def searchArtists(apiToken, artist):
+def searchArtists(apiToken, inputArtist):
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
-    query = urllib.parse.quote(artist)
+    query = urllib.parse.quote(inputArtist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
     artist = parseInput(artist)
@@ -76,20 +76,27 @@ def searchArtists(apiToken, artist):
 
     # Construct search result output
     artists = ['']  # Will hold the artist results - insert one null value at index 0 for easier array access
-    for artist in response['artists']['items']:
+    # For details on enumerate() see https://realpython.com/python-enumerate/
+    for i, artist in enumerate(response['artists']['items']):
         artistResult = {
             "name": artist["name"],
             "url": artist["external_urls"]["spotify"],
             "followers": artist["followers"]["total"],
             "popularity": artist["popularity"],
-            "genres": artist["genres"]
+            "genres": artist["genres"],
+            "id": artist["id"]
         }
         try:
             artistResult['imageUrl'] = artist["images"][0]["url"]
         except IndexError:
             artistResult['imageUrl'] = "Image not found"
-
-        artists.append(artistResult)
+        finally:
+            if i == 0 and artistResult['name'].lower() == inputArtist.lower():
+                # If the first result matches exactly the input search string, we can assume it is the correct
+                # artist, so return it. Otherwise, iterate through results
+                return artistResult
+            else:
+                artists.append(artistResult)
 
     print("Displaying search results. Please select the matching artist.")
     # Iterate through artists, prompt user to select the correct one
@@ -114,7 +121,6 @@ def searchArtists(apiToken, artist):
         print("ERROR: Invalid choice - please try again and make sure you enter a number corresponding to the search "
               "results.")
         return None
-
 
 def searchSongDetails(apiToken, track, artist):
     if track == "":
@@ -162,3 +168,49 @@ def parseInput(string):
     # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
     # Solution from https://stackoverflow.com/a/46414390
     return re.sub('[^0-9a-zA-Z ]', '', string)
+
+def getArtistReleases(apiToken, artist):
+    # Query all artist releases
+    # artist should be an artist dictionary returned from searchArtists()
+    try:
+        artist_id = artist['id']
+    except KeyError:
+        print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
+        return None
+
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    url = f"{APIURL}/artists/{artist_id}/albums?limit=50"
+
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        # Check if any releases were found during search
+        if response['total'] == 0:
+            raise ValueError("No releases found for this artist!")
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    #print(json.dumps(response, indent=2))
+
+    releases = []
+    for release in response['items']:
+        releaseItem = {
+            "type": release["album_group"],
+            "url": release["external_urls"]["spotify"],
+            "album_id": release["id"],
+            "album_artists": [a for a in release['artists']],
+            "title": release["name"],
+            "release_date": release["release_date"],
+            "tracks": release["total_tracks"]
+        }
+        try:
+            releaseItem["cover_image"] = release["images"][0]["url"]
+        except IndexError:
+            releaseItem["cover_image"] = "Image not found"
+        finally:
+            releases.append(releaseItem)
+
+    return releases
