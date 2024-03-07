@@ -22,6 +22,11 @@ html body {
 } /* bootstrap navbar, colors, etc */
 a {
   outline:0;
+  text-decoration: none;
+  color: #49cf49;
+}
+a:hover { 
+  color:rgb(227, 113, 113);
 }
 .nav-link:hover{
   background-color: #49cf49;
@@ -75,4 +80,14 @@ a {
 
 span {
   color: white;
+}
+
+.contents {
+  display: flex;
+}
+
+.custom_playlist { 
+  margin-top: 15px; 
+  margin-left: auto;
+  border-radius: 10px;
 }

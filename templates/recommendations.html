@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="form-login">   
+        <h1> Get Song Recommendations </h1>
+        <form action="/get_recommendations" method="post"> 
+            <p> Enter Artist Name :   </p>
+            <p> <input type="text" name="recommendations_artist" style="border-radius: 8px;" placeholder="Enter artist name"/> </p>
+            <p> Enter Artist Song :   </p>
+            <p> <input type="text" name="recommendations_song" style="border-radius: 8px;" placeholder="Enter song name"/> </p>
+            <p> <input type="submit" /></p>
+        </form>
+    </div>  
+{% endblock content %}

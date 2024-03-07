@@ -2,10 +2,15 @@ from flask import Flask,url_for,request,render_template
 app = Flask(__name__)
 import main
 
+#routes for the default pages, e.g. home, search page
 @app.route("/")
 @app.route("/home")
 def home():
     return render_template("index.html")
+
+@app.route("/search")
+def search():
+    return render_template("search.html",title="Song Details")
 
 @app.route("/tracks")
 def tracks():
@@ -15,10 +20,11 @@ def tracks():
 def search_tracks():
     return render_template("track_details.html",title="Song Details")
 
-@app.route("/search")
-def search():
-    return render_template("search.html",title="Song Details")
+@app.route("/recommendations")
+def recommendations():
+    return render_template("recommendations.html",title="Song Recommendations")
 
+# routes for the get functions (when they press submit on form)
 @app.route("/get_search",methods=["POST","GET"])
 def search_artist():
     if request.method == "POST":
@@ -28,6 +34,7 @@ def search_artist():
             return render_template("404.html",title="404 Not Found")
         try: 
             token = main.requestApiToken()
+            print(token)
             get_artists = main.searchArtists(token, name)
         except: 
             return render_template("404.html",title="404 Not Found")
@@ -46,7 +53,6 @@ def get_tracks():
             return render_template("404.html",title="404 Not Found")
         return render_template("top_tracks.html",title="Search Tracks",tracks=get_tracks,artist_title=top_tracks)
 
-
 @app.route("/get_track_details",methods=["POST","GET"])
 def get_track_details():
     if request.method == "POST":
@@ -59,8 +65,18 @@ def get_track_details():
             return render_template("404.html",title="404 Not Found")
         return render_template("get_track_details.html", title="Search Tracks", tracks=get_tracks_details, artist=track_artist, name=track_name)
     
-
-
+@app.route("/get_recommendations",methods=["POST","GET"])
+def get_recommendations():
+    if request.method == "POST":
+        track_artist = request.form.get("recommendations_artist")
+        track_name = request.form.get("recommendations_song")
+        token = main.requestApiToken()
+        get_track_recommendations = main.getTrackRecs(token, track_name, track_artist)
+        print(get_track_recommendations)
+        if get_track_recommendations == None:
+            return render_template("404.html",title="404 Not Found")
+        return render_template("get_recommendations.html", title="Get Recommendations", tracks=get_track_recommendations, artist=track_artist, name=track_name)
+    
 @app.route("/login",methods=["POST","GET"])
 def addUserKey():
     if request.method=="POST":

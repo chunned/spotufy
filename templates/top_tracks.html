@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="">    
-        <h1> {{artist_title|title}}'s Top 5 Most Popular Songs  </h1>
-        <!--- for loop to print out all the elements from the tracks list in the main.py file -->
+    <div class="">
+            <h1> {{artist_title|title}}'s Top 5 Most Popular Songs  </h1>
+            <!--- for loop to print out all the elements from the tracks list in the main.py file -->
         <hr>
         {% for track in tracks[:5] %} 
         <div class="artist_output">
@@ -11,7 +11,8 @@
                 <p>Album: {{ track['album'] }}</p>
                 <p>Album Release Date: {{ track['albumDate'] }}</p>
                 <p>Popularity Score: {{ track['popularity'] }}</p>
-                <p><a href="{{ track['songUrl'] }}"> Open in Spotify </a> </p>
+                <p><a href="{{ track['songUrl'] }}"> Open in Browser </a> </p>
+                <p><a href="{{ track['uri'] }}"> Open in Spotify App </a> </p>
             </div>
             <img src="{{ track['albumImage'] }}" alt="Artist Image" class="artist_image">
         </div>
