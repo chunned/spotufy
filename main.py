@@ -3,6 +3,7 @@ import dotenv
 import urllib.parse
 import re
 import json
+import lyricsgenius
 
 APIURL = 'https://api.spotify.com/v1'
 
@@ -214,3 +215,15 @@ def getArtistReleases(apiToken, artist):
             releases.append(releaseItem)
 
     return releases
+
+def getGeniusLyrics(artist_name, track_name):
+    # Retrieves and returns genius lyrics using lyricsgenius package
+    genius = lyricsgenius.Genius(GENIUS_ACCESS_TOKEN)
+    genius.response_format = 'html'
+    # Searches song through genius itself instead of spotify
+    song = genius.search_song(track_name, artist_name)
+    if song:
+        return song.lyrics
+    else:
+        return None
+
