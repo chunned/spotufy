@@ -58,7 +58,6 @@ def searchArtists(apiToken, inputArtist):
     query = urllib.parse.quote(inputArtist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
-
     artist = parseInput(artist)
 
     # Send the query - will return a list of matching artists
@@ -164,9 +163,6 @@ def searchSongDetails(apiToken, track, artist):
         trackResults['image'] = "Image not found"
     return trackResults
 
-# Example of working URI for searching a song: 
-# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5
-
 
 def parseInput(string):
     # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
@@ -216,7 +212,4 @@ def getArtistReleases(apiToken, artist):
             releaseItem["cover_image"] = "Image not found"
         finally:
             releases.append(releaseItem)
-
     return releases
-
-
