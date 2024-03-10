@@ -6,6 +6,7 @@ import json
 import lyricsgenius
 
 APIURL = 'https://api.spotify.com/v1'
+GENIUS_ACCESS_TOKEN = 'token'
 
 
 def makeApiCall(url, method, headers=None, paylode=None):
