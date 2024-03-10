@@ -3,25 +3,26 @@ import dotenv
 import urllib.parse
 import re
 import json
+import base64
+import webbrowser
 
 APIURL = 'https://api.spotify.com/v1'
 
-
-def makeApiCall(url, method, headers=None, paylode=None):
+def makeApiCall(url, method, headers=None, payload=None):
     # Generalized function to make any and all API requests as needed by the application
 
     # Send the request with the passed in parameters
     try:
-        response = requests.request(method, url, headers=headers, data=paylode)
+        response = requests.request(method, url, headers=headers, data=payload)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         print(f"ERROR: Error in API response code: {e}")
         return None
     except requests.exceptions.MissingSchema as e:
         print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
+        return None
     else:
         return response.json() if response.text else None
-
 
 def requestApiToken():
     # Function to request an API token from Spotify - valid for 1hr
@@ -38,19 +39,42 @@ def requestApiToken():
               'CLIENT_SECRET=<client secret>', end="")
         return None
 
+    client_id = apiSecrets["CLIENT_ID"]
+    client_secret = apiSecrets["CLIENT_SECRET"]
+    try:
+        # Authorize with relevant scopes
+        # Authorization method adapted from https://python.plainenglish.io/bored-of-libraries-heres-how-to-connect-to-the-spotify-api-using-pure-python-bd31e9e3d88a
+        scope = 'playlist-modify-public playlist-modify-private'
+        params = {
+            'response_type': 'code',
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': 'https://chunned.github.io/test/login-success'
+        }
+        webbrowser.open("https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params))
+        code = input("Enter the code from the end of the URL: ")
+    except ValueError:
+        print("Invalid authorization code length. Please try again and make sure you copy the full code.")
+        return None
+
     try:
         apiUrl = "https://accounts.spotify.com/api/token"
-        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded"}
-        apiData = {"grant_type": "client_credentials",
-                   "client_id": apiSecrets["CLIENT_ID"],
-                   "client_secret": apiSecrets["CLIENT_SECRET"]}
+        encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+                      "Authorization": "Basic " + encodedCreds}
+        apiData = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "https://chunned.github.io/test/login-success"
+        }
 
-        response = makeApiCall(apiUrl, "POST", headers=apiHeaders, paylode=apiData)
-        return response["access_token"]
+        resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+        # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+        data = json.loads(resp.content.decode('utf-8'))
+        return data["access_token"]
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         return None
-
 
 def searchArtists(apiToken, inputArtist):
     headers = {"Authorization": f"Bearer {apiToken}"}
@@ -58,7 +82,7 @@ def searchArtists(apiToken, inputArtist):
     query = urllib.parse.quote(inputArtist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
-    artist = parseInput(artist)
+    artist = parseInput(inputArtist)
 
     # Send the query - will return a list of matching artists
     try:
@@ -163,7 +187,6 @@ def searchSongDetails(apiToken, track, artist):
         trackResults['image'] = "Image not found"
     return trackResults
 
-
 def parseInput(string):
     # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
     # Solution from https://stackoverflow.com/a/46414390
@@ -174,7 +197,7 @@ def getArtistReleases(apiToken, artist):
     # artist should be an artist dictionary returned from searchArtists()
     try:
         artist_id = artist['id']
-    except KeyError:
+    except (KeyError, TypeError):
         print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
         return None
 
@@ -193,8 +216,6 @@ def getArtistReleases(apiToken, artist):
         print(f"ERROR: Error in search results: {e}")
         return None
 
-    #print(json.dumps(response, indent=2))
-
     releases = []
     for release in response['items']:
         releaseItem = {
@@ -212,5 +233,30 @@ def getArtistReleases(apiToken, artist):
             releaseItem["cover_image"] = "Image not found"
         finally:
             releases.append(releaseItem)
-
     return releases
+
+def create_playlist(api_token, playlist_name, track_list):
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
+    url = "https://api.spotify.com/v1/me"
+    user_id = makeApiCall(url, "GET", headers=headers)["id"]
+
+    # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
+    data = {
+        "name": playlist_name,
+        "description": "New playlist description",
+    }
+    payloaddump = json.dumps(data)
+    url = f"{APIURL}/users/{user_id}/playlists"
+    response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
+    playlist_id = response["id"]
+
+    # Send the POST query to insert tracks into the newly created playlist
+    url = f"{APIURL}/playlists/{playlist_id}/tracks"
+    data = {"uris": [track["uri"] for track in track_list]}
+    response = makeApiCall(url, "POST", headers=headers, payload=data)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
