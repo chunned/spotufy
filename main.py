@@ -1,6 +1,7 @@
 import requests
 import dotenv
 import urllib.parse
+import re
 import json
 
 APIURL = 'https://api.spotify.com/v1'
@@ -57,6 +58,7 @@ def searchArtists(apiToken, inputArtist):
     query = urllib.parse.quote(inputArtist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
+    artist = parseInput(artist)
 
     # Send the query - will return a list of matching artists
     try:
@@ -120,6 +122,52 @@ def searchArtists(apiToken, inputArtist):
               "results.")
         return None
 
+def searchSongDetails(apiToken, track, artist):
+    if track == "":
+        print("ERROR: Track input is empty")
+        return None
+    if artist == "":
+        print("ERROR: Artist input is empty")
+        return None
+
+    track = parseInput(track)
+    artist = parseInput(artist)
+
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {apiToken}"}
+
+    # Construct the query URL
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    response = makeApiCall(url, "GET", headers=headers)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
+    if not response["tracks"]["items"]:
+        print("ERROR: No track matching search criteria found")
+        return None
+    # Parse API response and store track information
+    track = response["tracks"]["items"][0]
+    trackResults = {
+        "name": track["name"],
+        "album": track["album"]["name"],
+        "artist": track["album"]["artists"][0]["name"],
+        "duration": track["duration_ms"] * (10 ** -3),
+        "released": track["album"]["release_date"],
+        "url": track["external_urls"]["spotify"],
+    }
+    try:
+        trackResults['image'] = track["album"]["images"][1]["url"]
+    except IndexError:
+        trackResults['image'] = "Image not found"
+    return trackResults
+
+
+def parseInput(string):
+    # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
+    # Solution from https://stackoverflow.com/a/46414390
+    return re.sub('[^0-9a-zA-Z ]', '', string)
 
 def getArtistReleases(apiToken, artist):
     # Query all artist releases
@@ -164,9 +212,7 @@ def getArtistReleases(apiToken, artist):
             releaseItem["cover_image"] = "Image not found"
         finally:
             releases.append(releaseItem)
-
     return releases
-
 
 def getRelatedArtists(apiToken, artistID):
     # artistID can be obtained from the dictionary returned by searchArtists()
@@ -198,4 +244,3 @@ def getRelatedArtists(apiToken, artistID):
         relatedArtists.append(a)
 
     return relatedArtists
-
