@@ -212,5 +212,4 @@ def getArtistReleases(apiToken, artist):
             releaseItem["cover_image"] = "Image not found"
         finally:
             releases.append(releaseItem)
-
     return releases
