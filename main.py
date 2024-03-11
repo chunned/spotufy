@@ -217,14 +217,16 @@ def getArtistReleases(apiToken, artist):
 
     return releases
 
-def getGeniusLyrics(artist_name, track_name):
-    # Retrieves and returns genius lyrics using lyricsgenius package
-    genius = lyricsgenius.Genius(GENIUS_ACCESS_TOKEN)
+def get_genius_lyrics(artist_name, track_name):
+    # Retrieve genius lyrics using lyricsgenius package
+    secrets = dotenv.dotenv_values('.env')
+    genius_token = secrets["GENIUS_TOKEN"]
+    genius = lyricsgenius.Genius(genius_token)
     genius.response_format = 'html'
-    # Searches song through genius itself instead of spotify
+
+    # Search for song object from Genius
     song = genius.search_song(track_name, artist_name)
     if song:
         return song.lyrics
     else:
         return None
-
