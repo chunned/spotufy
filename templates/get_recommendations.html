@@ -4,10 +4,10 @@
         <div class="contents">    
             <h1> Similar Songs to "{{name|title}}" by {{artist|title}}  </h1>
             <!--- for loop to print out all the elements from the tracks list in the main.py file -->
-            <a href="/" class="custom_playlist"> Create Playlist </a>
+            <a href="{{playlist_link}}" class="custom_playlist"> Create Playlist </a>
         </div>
         <hr>
-        {% for track in tracks[1:] %} 
+        {% for track in tracks %} 
         <div class="artist_output">
             <div class="text">
                 <p>Name: {{ track['name'] }}</p>

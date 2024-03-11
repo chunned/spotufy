@@ -3,19 +3,16 @@ import dotenv
 import urllib.parse
 import json
 import prettyprint as pp
-import base64
-import webbrowser
-from flask import redirect
 
 APIURL = 'https://api.spotify.com/v1'
 
 
-def makeApiCall(url, method, headers=None, payload=None):
+def makeApiCall(url, method, headers=None, paylode=None):
     # Generalized function to make any and all API requests as needed by the application
 
     # Send the request with the passed in parameters
     try:
-        response = requests.request(method, url, headers=headers, data=payload)
+        response = requests.request(method, url, headers=headers, data=paylode)
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         print(f"ERROR: Error in API response code: {e}")
@@ -24,7 +21,36 @@ def makeApiCall(url, method, headers=None, payload=None):
         print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
     else:
         return response.json() if response.text else None
- 
+
+def requestApiToken():
+    # Function to request an API token from Spotify - valid for 1hr
+
+    # Read the app's client ID and secret from .env file
+    try:
+        apiSecrets = dotenv.dotenv_values('.env')
+        if not apiSecrets:
+            raise ValueError
+    except ValueError:
+        print('Reading .env file failed - no data read.\n' +
+              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
+              'CLIENT_ID=<client id>\n' +
+              'CLIENT_SECRET=<client secret>', end="")
+        return None
+
+    try:
+        apiUrl = "https://accounts.spotify.com/api/token"
+        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded"}
+        apiData = {"grant_type": "client_credentials",
+                   "client_id": apiSecrets["CLIENT_ID"],
+                   "client_secret": apiSecrets["CLIENT_SECRET"]}
+
+        response = makeApiCall(apiUrl, "POST", headers=apiHeaders, paylode=apiData)
+        return response["access_token"]
+    except KeyError:
+        print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
+        return None
+
+
 def searchArtists(apiToken, artist):
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
@@ -208,7 +234,7 @@ def getTrackRecs(apiToken, track, artist):
         print(f"ERROR: Error in search results: {e}")
         return None
     
-    recs = []  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
+    recs = ['']  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
     for rec in response['tracks']:
         #stores track id, album, artist and album art in dictionary
         recsResult = {
@@ -234,66 +260,7 @@ def getTrackRecs(apiToken, track, artist):
         "description": "Playlist",
         "public" : True
     })
+    
+    responsePlaylist = makeApiCall(urlPlaylist, "POST", headers=apiHeaders,paylode=data)
+    print(responsePlaylist)
     return recs
-
-def create_playlist(api_token, playlist_name, track_list):
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
-    url = "https://api.spotify.com/v1/me"
-    user_id = makeApiCall(url, "GET", headers=headers)["id"]
-    print(user_id)
-
-    # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
-    data = {
-        "name": playlist_name,
-        "description": "New playlist description",
-    }
-    payloaddump = json.dumps(data)
-    url = f"{APIURL}/users/{user_id}/playlists"
-    response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-    playlist_id = response["id"]
-    play_url = response["external_urls"]["spotify"]
-    # Send the POST query to insert tracks into the newly created playlist
-    url = f"{APIURL}/playlists/{playlist_id}/tracks"
-    track_data = {"uris": [track["uri"] for track in track_list]}
-    datadump = json.dumps(track_data)
-    response = makeApiCall(url, "POST", headers=headers, payload=datadump)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-    else:
-        print(play_url)
-        return play_url
-
-def getRelatedArtists(apiToken, artistID):
-    # artistID can be obtained from the dictionary returned by searchArtists()
-
-    headers = {"Authorization": f"Bearer {apiToken}"}
-    # URL encode artist string to ensure request executes properly
-    query = urllib.parse.quote(artistID)
-    # Construct the query URL
-    url = f"{APIURL}/artists/{artistID}/related-artists"
-
-    try:
-        response = makeApiCall(url, "GET", headers=headers)
-        # print(json.dumps(response, indent=2))
-        if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-
-        # Check if any artists were found during search
-        if len(response['artists']) == 0:
-            raise ValueError("No search results found!")
-
-    except ValueError as e:
-        print(f"ERROR: Error in search results: {e}")
-        return None
-
-    relatedArtists = []
-    for artistResult in response['artists']:
-        a = searchArtists(apiToken, artistResult['name'])
-        relatedArtists.append(a)
-
-    return relatedArtists
