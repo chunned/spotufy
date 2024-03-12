@@ -308,10 +308,4 @@ def getRelatedArtists(apiToken, artistID):
     return relatedArtists
 
 
-token = requestApiToken()
-
-a = {"uri": "spotify:track:a"}
-b = {"uri": "spotify:track:bi"}
-
-res = create_playlist(token, "#%asdfasdfasdf~%$#%", [a, b])
 
