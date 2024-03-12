@@ -213,3 +213,34 @@ def getArtistReleases(apiToken, artist):
         finally:
             releases.append(releaseItem)
     return releases
+
+def getRelatedArtists(apiToken, artistID):
+    # artistID can be obtained from the dictionary returned by searchArtists()
+
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    # URL encode artist string to ensure request executes properly
+    query = urllib.parse.quote(artistID)
+    # Construct the query URL
+    url = f"{APIURL}/artists/{artistID}/related-artists"
+
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        # print(json.dumps(response, indent=2))
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+
+        # Check if any artists were found during search
+        if len(response['artists']) == 0:
+            raise ValueError("No search results found!")
+
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    relatedArtists = []
+    for artistResult in response['artists']:
+        a = searchArtists(apiToken, artistResult['name'])
+        relatedArtists.append(a)
+
+    return relatedArtists
