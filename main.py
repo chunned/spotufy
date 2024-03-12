@@ -280,4 +280,3 @@ def getRelatedArtists(apiToken, artistID):
 
     return relatedArtists
 
-
