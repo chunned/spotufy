@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="">    
+        <div class="contents">    
+            <h1> {{name|title}}'s Discography </h1>
+            <!--- for loop to print out all the elements from the tracks list in the main.py file -->
+        </div>
+        <hr>
+        {% for track in discography %} 
+        <div class="artist_output">
+            <div class="text">
+                <p>Type : {{ track['type']|title }}</p>
+                <p>Title : {{ track['title'] }}</p>
+                <p>Release Date : {{ track['release_date'] }}</p>
+                <p>Total Tracks : {{ track['tracks'] }}</p>
+                <p><a href="{{ track['url'] }}"> Open in Browser  </a> </p>
+                <!-- <p><a href="spotify:album:{{['album_id']}}"> Open in Spotify App </a> </p> opening the album in the app does not work-->
+            </div>
+            <img src="{{ track['cover_image'] }}" alt="Artist Image" class="artist_image"> 
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+{% endblock content %}

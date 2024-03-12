@@ -44,6 +44,10 @@ def related():
 def lyrics():
     return render_template("lyrics.html",title="Get Lyrics",token=session.get("access_token"))
 
+@app.route("/artist_releases")
+def artist_releases():
+    return render_template("artist_releases.html",title="Search Artist Releases",token=session.get("access_token"))
+
 # routes for the get functions (when they press submit on form)
 @app.route("/get_search",methods=["POST","GET"])
 def search_artist():
@@ -134,7 +138,16 @@ def get_lyrics():
         get_lyrics = main.get_genius_lyrics(artist_name,artist_song)
         print(get_lyrics)   
     return render_template("get_lyrics.html",title="Lyrics",token=session.get("access_token"),lyrics=get_lyrics,name=artist_song,artist=artist_name)
-       
+
+@app.route("/get_artist_releases",methods=["GET","POST"])
+def get_artist_releases():
+    if request.method == "POST":
+        token = session.get("access_token")
+        name = request.form.get("search_artist_releases")
+        get_artists = main.searchArtists(token,name)
+        get_discography =  main.getArtistReleases(token,get_artists[1])
+        print(get_discography)
+        return render_template("get_discography.html",title="Artist Discography",token=session.get("access_token"),name=name,discography=get_discography)
 
 
 @app.route("/login",methods=["POST","GET"])

@@ -381,8 +381,6 @@ def get_genius_lyrics(artist_name, track_name):
             song = genius.search_song(track_name, artist_name)
         else:
             raise ValueError("No track name included in search")
-
-        
         if song:
             lyrics = song.lyrics
             lyrics = lyrics.split('\n')
@@ -390,8 +388,53 @@ def get_genius_lyrics(artist_name, track_name):
             return lyrics
         else:
             return None
-
     except ValueError as e:
         print(f'ERROR: {e}')
         return None
     # Search for song object from Genius
+
+def getArtistReleases(apiToken, artist):
+    # Query all artist releases
+    # artist should be an artist dictionary returned from searchArtists()
+    try:
+        artist_id = artist['id']
+    except KeyError:
+        print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
+        return None
+
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    url = f"{APIURL}/artists/{artist_id}/albums?limit=50"
+
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        # Check if any releases were found during search
+        if response['total'] == 0:
+            raise ValueError("No releases found for this artist!")
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    #print(json.dumps(response, indent=2))
+
+    releases = []
+    for release in response['items']:
+        releaseItem = {
+            "type": release["album_group"],
+            "url": release["external_urls"]["spotify"],
+            "album_id": release["id"],
+            "album_artists": [a for a in release['artists']],
+            "title": release["name"],
+            "release_date": release["release_date"],
+            "tracks": release["total_tracks"]
+        }
+        try:
+            releaseItem["cover_image"] = release["images"][0]["url"]
+        except IndexError:
+            releaseItem["cover_image"] = "Image not found"
+        finally:
+            releases.append(releaseItem)
+
+    return releases
