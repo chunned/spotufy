@@ -5,6 +5,7 @@ import json
 import prettyprint as pp
 import base64
 import webbrowser
+import lyricsgenius
 from flask import redirect
 
 APIURL = 'https://api.spotify.com/v1'
@@ -297,3 +298,100 @@ def getRelatedArtists(apiToken, artistID):
         relatedArtists.append(a)
 
     return relatedArtists
+
+def getUserRecs(apiToken):
+    # URL encode username strings to ensure request executes properly
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    # Construct the query URL to search for a user's top 5 tracks in the past 4 weeks
+    url = f"{APIURL}/me/top/tracks?time_range=short_term&limit=5"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if response['total']== 0:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    #Parse through the json from the response given above to pinpoint the track id's of each song then add them to a string
+    seed_tracks= ""
+    for i in range(0, 5):
+        x = response['items'][i]['id']
+        seed_tracks = str(seed_tracks) + str(x)
+        if i < 4:
+            seed_tracks = str(seed_tracks) + ','
+    print(seed_tracks)
+
+    #URL Encode the string of tracks to ensure the request will process
+    track_query = urllib.parse.quote(seed_tracks)
+    url = f"{APIURL}/recommendations?limit=5&seed_tracks={track_query}"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if response["tracks"][0] == []:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    recs = ['']  # Will hold the track reccomendation results
+    for rec in response['tracks']:
+        #stores track id, album, artist and album art in dictionary
+        recsResult = {
+            "id": rec["id"],
+            "name": rec["name"],
+            "album": rec["album"]["name"],
+            "artist": rec["artists"][0]["name"],
+            "songUrl" : rec["external_urls"]["spotify"],
+            "uri" : rec["uri"]
+
+        }
+        try:
+            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+        except IndexError:
+            recsResult['imageUrl'] = "Image not found"
+        recs.append(recsResult)
+
+    #prints the results of the dictionary for each track reccomendation.
+    for i in range(1, len(recs)):
+        print(f"RECOMMENDATION #{i}\n"
+              f"NAME: {recs[i]['name']}\n"
+              f"TRACK ID: {recs[i]['id']}\n"
+              f"ARTIST: {recs[i]['artist']}\n"
+              f"ALBUM: {recs[i]['album']}\n"
+              f"PHOTO: {recs[i]['imageUrl']}\n---")
+    return recs
+
+def get_genius_lyrics(artist_name, track_name):
+    # Retrieve genius lyrics using lyricsgenius package
+    secrets = dotenv.dotenv_values('.env')
+    genius_token = secrets["GENIUS_TOKEN"]
+    genius = lyricsgenius.Genius(genius_token)
+    genius.response_format = 'html'
+    try:
+        if not artist_name:
+            raise ValueError("No artist name included in search")
+        if track_name:
+            song = genius.search_song(track_name, artist_name)
+        else:
+            raise ValueError("No track name included in search")
+
+        
+        if song:
+            lyrics = song.lyrics
+            lyrics = lyrics.split('\n')
+            lyrics = '\n'.join(lyrics[1:])
+            return lyrics
+        else:
+            return None
+
+    except ValueError as e:
+        print(f'ERROR: {e}')
+        return None
+    # Search for song object from Genius

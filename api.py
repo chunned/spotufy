@@ -19,7 +19,7 @@ def request_api_token():
     client_id = apiSecrets["CLIENT_ID"]
     client_secret = apiSecrets["CLIENT_SECRET"]
     
-    scope = 'playlist-modify-public playlist-modify-private'
+    scope = 'playlist-modify-public playlist-modify-private user-top-read'
     params = {
             'response_type': 'code',
             'client_id': client_id,
