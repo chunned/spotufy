@@ -239,30 +239,43 @@ def getArtistReleases(apiToken, artist):
 def create_playlist(api_token, playlist_name, track_list):
     headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
     url = "https://api.spotify.com/v1/me"
-    user_id = makeApiCall(url, "GET", headers=headers)["id"]
-
+    try:
+        user_id = makeApiCall(url, "GET", headers=headers)["id"]
+    except TypeError:
+        print('ERROR: No valid user ID returned. Ensure your authorization token is correct.')
+    playlist_id = ""
     # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
-    data = {
-        "name": playlist_name,
-        "description": "New playlist description",
-    }
-    payloaddump = json.dumps(data)
-    url = f"{APIURL}/users/{user_id}/playlists"
-    response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-    playlist_id = response["id"]
-
-    # Send the POST query to insert tracks into the newly created playlist
-    url = f"{APIURL}/playlists/{playlist_id}/tracks"
-    data = {"uris": [track["uri"] for track in track_list]}
-    response = makeApiCall(url, "POST", headers=headers, payload=data)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-
-      
+    try:
+        if playlist_name:
+            data = {
+                "name": playlist_name,
+                "description": "New playlist description",
+            }
+            payloaddump = json.dumps(data)
+            url = f"{APIURL}/users/{user_id}/playlists"
+            response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
+            if not response:
+                print("ERROR: Response from API request is empty")
+                return None
+            playlist_id = response["id"]
+        else:
+            raise ValueError("No playlist name provided")
+    except ValueError as e:
+        print(f'ERROR: {e}'
+              )
+    try:
+        if playlist_id:
+            # Send the POST query to insert tracks into the newly created playlist
+            url = f"{APIURL}/playlists/{playlist_id}/tracks"
+            data = {"uris": [track["uri"] for track in track_list]}
+            data = json.dumps(data, indent=2)
+            response = makeApiCall(url, "POST", headers=headers, payload=data)
+            if not response:
+                raise ValueError("No response from API query. Ensure track URIs are correct.")
+        else:
+          raise ValueError("No playlist ID returned")
+    except ValueError as e:
+        print(f'ERROR: {e}')
 def getRelatedArtists(apiToken, artistID):
     # artistID can be obtained from the dictionary returned by searchArtists()
 
@@ -293,4 +306,12 @@ def getRelatedArtists(apiToken, artistID):
         relatedArtists.append(a)
 
     return relatedArtists
+
+
+token = requestApiToken()
+
+a = {"uri": "spotify:track:a"}
+b = {"uri": "spotify:track:bi"}
+
+res = create_playlist(token, "#%asdfasdfasdf~%$#%", [a, b])
 
