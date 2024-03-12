@@ -174,10 +174,48 @@ def getUserRecs(apiToken):
         seed_tracks = str(seed_tracks) + str(x)
         if i < 4:
             seed_tracks = str(seed_tracks) + ','
+    print(seed_tracks)
 
     #URL Encode the string of tracks to ensure the request will process
     track_query = urllib.parse.quote(seed_tracks)
     url = f"{APIURL}/recommendations?limit=5&seed_tracks={track_query}"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if response["tracks"][0] == []:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    recs = ['']  # Will hold the track reccomendation results
+    for rec in response['tracks']:
+        #stores track id, album, artist and album art in dictionary
+        recsResult = {
+            "id": rec["id"],
+            "name": rec["name"],
+            "album": rec["album"]["name"],
+            "artist": rec["artists"][0]["name"]
+        }
+        try:
+            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+        except IndexError:
+            recsResult['imageUrl'] = "Image not found"
+        recs.append(recsResult)
+
+    #prints the results of the dictionary for each track reccomendation.
+    for i in range(1, len(recs)):
+        print(f"RECOMMENDATION #{i}\n"
+              f"NAME: {recs[i]['name']}\n"
+              f"TRACK ID: {recs[i]['id']}\n"
+              f"ARTIST: {recs[i]['artist']}\n"
+              f"ALBUM: {recs[i]['album']}\n"
+              f"PHOTO: {recs[i]['imageUrl']}\n---")
+
+    return recs
 
 
 def searchSongDetails(apiToken, track, artist):
@@ -290,7 +328,7 @@ def getTrackRecs(apiToken, track, artist):
         if not response:
             print("ERROR: Response from API request is empty")
             return None
-        if response["tracks"]["items"] == []:
+        if not response["tracks"]["items"]:
             print("ERROR: No track matching search creteria found")
             return None
     except ValueError as e:
@@ -309,14 +347,14 @@ def getTrackRecs(apiToken, track, artist):
         if not response:
             print("ERROR: Response from API request is empty")
             return None
-        if response["tracks"][0] == []:
-            print("ERROR: No track matching search creteria found")
+        if not response["tracks"][0]:
+            print("ERROR: No track matching search criteria found")
             return None
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         return None
     
-    recs = ['']  # Will hold the track reccomendation results
+    recs = ['']  # Will hold the track recommendation results
     for rec in response['tracks']:
         #stores track id, album, artist and album art in dictionary
         recsResult = {
@@ -331,7 +369,7 @@ def getTrackRecs(apiToken, track, artist):
             recsResult['imageUrl'] = "Image not found"
         recs.append(recsResult)
     
-    #prints the results of the dictionary for each track reccomendation.
+    #prints the results of the dictionary for each track recommendation.
     for i in range(1, len(recs)):
         print(f"RECOMMENDATION #{i}\n"
               f"NAME: {recs[i]['name']}\n"
@@ -403,3 +441,7 @@ def getRelatedArtists(apiToken, artistID):
 
     return relatedArtists
 
+
+
+token = requestApiToken()
+getUserRecs(token)
