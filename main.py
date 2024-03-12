@@ -7,7 +7,6 @@ import webbrowser
 
 APIURL = 'https://api.spotify.com/v1'
 
-
 def makeApiCall(url, method, headers=None, paylode=None):
     # Generalized function to make any and all API requests as needed by the application
 
@@ -23,10 +22,8 @@ def makeApiCall(url, method, headers=None, paylode=None):
     else:
         return response.json() if response.text else None
 
-
 def requestApiToken():
     # Function to request an API token from Spotify - valid for 1hr
-
     # Read the app's client ID and secret from .env file
     try:
         apiSecrets = dotenv.dotenv_values('.env')
@@ -59,7 +56,6 @@ def requestApiToken():
         print("Invalid authorization code length. Please try again and make sure you copy the full code.")
         return None
 
-
     try:
         apiUrl = "https://accounts.spotify.com/api/token"
         encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
@@ -78,8 +74,6 @@ def requestApiToken():
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         return None
-
-
 
 def searchArtists(apiToken, artist):
     headers = {"Authorization": f"Bearer {apiToken}"}
@@ -167,7 +161,6 @@ def getUserRecs(apiToken):
         seed_tracks = str(seed_tracks) + str(x)
         if i < 4:
             seed_tracks = str(seed_tracks) + ','
-    print(seed_tracks)
 
     #URL Encode the string of tracks to ensure the request will process
     track_query = urllib.parse.quote(seed_tracks)
@@ -228,7 +221,6 @@ def getTrackRecs(apiToken, track, artist):
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         return None
-    print(response)
     
     # Parse API response and stores track id
     track = response["tracks"]["items"][0]
@@ -274,4 +266,3 @@ def getTrackRecs(apiToken, track, artist):
               f"PHOTO: {recs[i]['imageUrl']}\n---")
 
     return recs
-    
