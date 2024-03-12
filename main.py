@@ -5,8 +5,10 @@ import re
 import json
 import base64
 import webbrowser
+import lyricsgenius
 
 APIURL = 'https://api.spotify.com/v1'
+GENIUS_ACCESS_TOKEN = 'token'
 
 def makeApiCall(url, method, headers=None, paylode=None):
     # Generalized function to make any and all API requests as needed by the application
@@ -79,10 +81,11 @@ def requestApiToken():
 def searchArtists(apiToken, inputArtist):
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
-    query = urllib.parse.quote(inputArtist)
+    artist = parseInput(inputArtist)
+    query = urllib.parse.quote(artist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
-    artist = parseInput(artist)
+    # Can be removed
 
     # Send the query - will return a list of matching artists
     try:
@@ -176,6 +179,7 @@ def getUserRecs(apiToken):
     track_query = urllib.parse.quote(seed_tracks)
     url = f"{APIURL}/recommendations?limit=5&seed_tracks={track_query}"
 
+
 def searchSongDetails(apiToken, track, artist):
     if track == "":
         print("ERROR: Track input is empty")
@@ -223,6 +227,7 @@ def parseInput(string):
     # Solution from https://stackoverflow.com/a/46414390
     return re.sub('[^0-9a-zA-Z ]', '', string)
 
+
 def getArtistReleases(apiToken, artist):
     # Query all artist releases
     # artist should be an artist dictionary returned from searchArtists()
@@ -250,8 +255,7 @@ def getArtistReleases(apiToken, artist):
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         return None
-     
-    #print(json.dumps(response, indent=2))
+
 
     releases = []
     for release in response['items']:
@@ -271,6 +275,7 @@ def getArtistReleases(apiToken, artist):
         finally:
             releases.append(releaseItem)
     return releases
+
 
 
 def getTrackRecs(apiToken, track, artist):
@@ -337,6 +342,36 @@ def getTrackRecs(apiToken, track, artist):
 
     return recs
   
+
+def get_genius_lyrics(artist_name, track_name):
+    # Retrieve genius lyrics using lyricsgenius package
+    secrets = dotenv.dotenv_values('.env')
+    genius_token = secrets["GENIUS_TOKEN"]
+    genius = lyricsgenius.Genius(genius_token)
+    genius.response_format = 'html'
+    try:
+        if not artist_name:
+            raise ValueError("No artist name included in search")
+        if track_name:
+            song = genius.search_song(track_name, artist_name)
+        else:
+            raise ValueError("No track name included in search")
+
+        if song:
+            lyrics = song.lyrics
+            lyrics = lyrics.split('\n')
+            lyrics = '\n'.join(lyrics[1:])
+            return lyrics
+        else:
+            return None
+
+    except ValueError as e:
+        print(f'ERROR: {e}')
+        return None
+    # Search for song object from Genius
+
+
+
 def getRelatedArtists(apiToken, artistID):
     # artistID can be obtained from the dictionary returned by searchArtists()
 
@@ -368,4 +403,3 @@ def getRelatedArtists(apiToken, artistID):
 
     return relatedArtists
 
-  
