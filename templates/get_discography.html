@@ -9,10 +9,10 @@
         {% for track in discography %} 
         <div class="artist_output">
             <div class="text">
-                <p>Type : {{ track['type']|title }}</p>
-                <p>Title : {{ track['title'] }}</p>
-                <p>Release Date : {{ track['release_date'] }}</p>
-                <p>Total Tracks : {{ track['tracks'] }}</p>
+                <p>Type: {{ track['type']|title }}</p>
+                <p>Title: {{ track['title'] }}</p>
+                <p>Release Date: {{ track['release_date'] }}</p>
+                <p>Total Tracks: {{ track['tracks'] }}</p>
                 <p><a href="{{ track['url'] }}"> Open in Browser  </a> </p>
                 <!-- <p><a href="spotify:album:{{['album_id']}}"> Open in Spotify App </a> </p> opening the album in the app does not work-->
             </div>

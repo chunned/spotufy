@@ -2,9 +2,7 @@ import requests
 import dotenv
 import urllib.parse
 import json
-import prettyprint as pp
 import base64
-import webbrowser
 import lyricsgenius
 from flask import redirect
 
@@ -25,7 +23,34 @@ def makeApiCall(url, method, headers=None, payload=None):
         print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
     else:
         return response.json() if response.text else None
- 
+
+def request_api_token():
+    try:
+        apiSecrets = dotenv.dotenv_values('.env')
+        if not apiSecrets:
+            raise ValueError
+    except ValueError:
+        print('Reading .env file failed - no data read.\n' +
+              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
+              'CLIENT_ID=<client id>\n' +
+              'CLIENT_SECRET=<client secret>', end="")
+        return None
+
+    client_id = apiSecrets["CLIENT_ID"]
+    client_secret = apiSecrets["CLIENT_SECRET"]
+    
+    scope = 'playlist-modify-public playlist-modify-private user-top-read'
+    params = {
+            'response_type': 'code',
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': 'http://192.168.2.28:9191/callback',
+            "show_dialog" : True
+        }
+    SITE_URL = "https://accounts.spotify.com/authorize"
+    auth_url = f"{SITE_URL}?{urllib.parse.urlencode(params)}"
+    return redirect(auth_url)
+
 def searchArtists(apiToken, artist):
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
@@ -53,9 +78,9 @@ def searchArtists(apiToken, artist):
         artistResult = {
             "name": artist["name"],
             "url": artist["external_urls"]["spotify"],
-            "followers": artist["followers"]["total"],
+            "followers": "{:,d}".format(artist["followers"]["total"]),
             "popularity": artist["popularity"],
-            "genres": artist["genres"],
+            "genres": ', '.join(artist["genres"]), 
             "id" : artist["id"],
             "uri" : artist["uri"]
         }

@@ -4,7 +4,11 @@
         <div class="contents">    
             <h1> Similar Songs to "{{name|title}}" by {{artist|title}}  </h1>
             <!--- for loop to print out all the elements from the tracks list in the main.py file -->
-            <a href="{{playlist_link}}" class="custom_playlist"> Create Playlist </a>
+            <form action="{{ url_for('create_playlist_post') }}" method="post">
+                <input type="hidden" name="playlist_name" value="{{ artist }}">
+                <input type="hidden" name="tracks" value="{{ tracks }}">
+                <button type="submit" class="custom_playlist">Create Playlist</button>
+            </form>
         </div>
         <hr>
         {% for track in tracks %} 
