@@ -86,12 +86,27 @@ span {
   display: flex;
 }
 
-.custom_playlist { 
-  margin-top: 15px; 
-  margin-left: auto;
-  border-radius: 10px;
-}
+
 
 .otu_green { 
   color:#49cf49;
 }
+
+.custom_playlist {
+ display: block;
+ margin: 0 auto;
+ padding-left: 20%;
+ padding-top: 13px;
+}
+
+.playlist_button { 
+  background: none;
+  outline: none;
+  border: none;
+  color: #49cf49;
+}
+
+.playlist_button:hover{ 
+  color:rgb(227, 113, 113);
+}
+

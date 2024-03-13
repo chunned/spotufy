@@ -115,12 +115,13 @@ def search_related():
         
 @app.route("/create_playlist",methods=["POST"])
 def create_playlist_post():
-    playlist_name = request.form['playlist_name']
+    get_playlist_name = request.form['playlist_name']
+    playlist_name = f"Recommended Songs for {get_playlist_name.title()}"
     tracks = ast.literal_eval(request.form['tracks'])
     token = session.get("access_token")
 
     link = create_playlist(token, playlist_name, tracks)
-    return f"Playlist link - {link}"
+    return redirect(link)
 
 @app.route("/my_recommendations",methods=["GET"])
 def my_recommendations():
@@ -165,7 +166,7 @@ def callback():
         req_body = {
             "code" : request.args["code"],
             "grant_type" : "authorization_code",
-            "redirect_uri" : 'http://192.168.2.28:9191/callback',
+            "redirect_uri" : 'http://192.168.2.252:9191/callback',
             "client_id" : client_id,
             "client_secret" : client_secret
         }
@@ -178,4 +179,4 @@ def callback():
         return render_template("404.html")
 
 if __name__ == '__main__':
-    app.run(host="192.168.2.28", debug=True, port=9191)
+    app.run(host="192.168.2.252", debug=True, port=9191)

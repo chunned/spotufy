@@ -44,7 +44,7 @@ def request_api_token():
             'response_type': 'code',
             'client_id': client_id,
             'scope': scope,
-            'redirect_uri': 'http://192.168.2.28:9191/callback',
+            'redirect_uri': 'http://192.168.2.252:9191/callback',
             "show_dialog" : True
         }
     SITE_URL = "https://accounts.spotify.com/authorize"
