@@ -4,8 +4,10 @@ import dotenv
 import requests
 import ast
 
-# Videos used to make Flask skeleton : https://www.youtube.com/watch?v=dam0GPOAvVI
-#https://www.youtube.com/watch?v=oVA0fD13NGI, https://www.youtube.com/watch?v=MwZwr5Tvyxo
+# Inspiration for flask skeleton: 
+# https://www.youtube.com/watch?v=dam0GPOAvVI
+# https://www.youtube.com/watch?v=oVA0fD13NGI
+# https://www.youtube.com/watch?v=MwZwr5Tvyxo
 
 api_secrets = dotenv.dotenv_values('.env')
 client_id = api_secrets["CLIENT_ID"]
@@ -122,7 +124,7 @@ def search_related():
 @app.route("/create_playlist",methods=["POST"])
 def create_playlist_post():
     get_playlist_name = request.form['playlist_name']
-    playlist_name = f"Recommended Songs for {get_playlist_name.title()}"
+    playlist_name = f"Recommended Songs based on {get_playlist_name.title()}"
     tracks = ast.literal_eval(request.form['tracks'])
     token = session.get("access_token")
 
@@ -172,7 +174,7 @@ def callback():
         req_body = {
             "code" : request.args["code"],
             "grant_type" : "authorization_code",
-            "redirect_uri" : 'http://192.168.2.252:9191/callback',
+            "redirect_uri" : 'http://localhost:9191/callback',
             "client_id" : client_id,
             "client_secret" : client_secret
         }
@@ -185,4 +187,4 @@ def callback():
         return render_template("404.html")
 
 if __name__ == '__main__':
-    app.run(host="192.168.2.252", debug=True, port=9191)
+    app.run(host="localhost", debug=True, port=9191)
