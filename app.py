@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template, redirect, session
-from main import *
+from spotufy import *
 import dotenv
 import requests
 import ast
