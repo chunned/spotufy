@@ -1,17 +1,17 @@
 import requests
 import dotenv
 import urllib.parse
+import re
 import json
 import base64
 import lyricsgenius
 from flask import redirect
+import webbrowser
 
 APIURL = 'https://api.spotify.com/v1'
 
-
-def makeApiCall(url, method, headers=None, payload=None):
+def make_api_call(url, method, headers=None, payload=None):
     # Generalized function to make any and all API requests as needed by the application
-
     # Send the request with the passed in parameters
     try:
         response = requests.request(method, url, headers=headers, data=payload)
@@ -21,13 +21,16 @@ def makeApiCall(url, method, headers=None, payload=None):
         return None
     except requests.exceptions.MissingSchema as e:
         print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
+        return None
     else:
         return response.json() if response.text else None
 
 def request_api_token():
+    # Function to request an API token from Spotify - valid for 1hr
+    # Read the app's client ID and secret from .env file
     try:
-        apiSecrets = dotenv.dotenv_values('.env')
-        if not apiSecrets:
+        api_secrets = dotenv.dotenv_values('.env')
+        if not api_secrets:
             raise ValueError
     except ValueError:
         print('Reading .env file failed - no data read.\n' +
@@ -51,16 +54,18 @@ def request_api_token():
     auth_url = f"{SITE_URL}?{urllib.parse.urlencode(params)}"
     return redirect(auth_url)
 
-def searchArtists(apiToken, artist):
-    headers = {"Authorization": f"Bearer {apiToken}"}
+def search_artists(api_token, input_artist):
+    headers = {"Authorization": f"Bearer {api_token}"}
     # URL encode artist string to ensure request executes properly
+    artist = parse_input(input_artist)
     query = urllib.parse.quote(artist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
+    artist = parseInput(inputArtist)
 
     # Send the query - will return a list of matching artists
     try:
-        response = makeApiCall(url, "GET", headers=headers)
+        response = make_api_call(url, "GET", headers)
 
         if not response:
             print("ERROR: Response from API request is empty")
@@ -74,8 +79,9 @@ def searchArtists(apiToken, artist):
 
     # Construct search result output
     artists = ['']  # Will hold the artist results - insert one null value at index 0 for easier array access
-    for artist in response['artists']['items']:
-        artistResult = {
+    # For details on enumerate() see https://realpython.com/python-enumerate/
+    for i, artist in enumerate(response['artists']['items']):
+        artist_result = {
             "name": artist["name"],
             "url": artist["external_urls"]["spotify"],
             "followers": "{:,d}".format(artist["followers"]["total"]),
@@ -85,11 +91,16 @@ def searchArtists(apiToken, artist):
             "uri" : artist["uri"]
         }
         try:
-            artistResult['imageUrl'] = artist["images"][0]["url"]
+            artist_result['imageUrl'] = artist["images"][0]["url"]
         except IndexError:
-            artistResult['imageUrl'] = "Image not found"
-
-        artists.append(artistResult)
+            artist_result['imageUrl'] = "Image not found"
+        finally:
+            if i == 0 and artist_result['name'].lower() == input_artist.lower():
+                # If the first result matches exactly the input search string, we can assume it is the correct
+                # artist, so return it. Otherwise, iterate through results
+                return artist_result
+            else:
+                artists.append(artist_result)
 
     print("Displaying search results. Please select the matching artist.")
     # Iterate through artists, prompt user to select the correct one
@@ -103,51 +114,7 @@ def searchArtists(apiToken, artist):
             f"PHOTO: {artists[i]['imageUrl']}\n"
             f"SPOTIFYURI: {artists[i]['uri']}\n---")
     return artists
-
-def searchSongDetails(apiToken, track, artist):
-    if track == "":
-        print("ERROR: Track input is empty")
-        return None
-    if artist == "":
-        print("ERROR: Artist input is empty")
-        return None
-    # URL encode track and artist strings to ensure request executes properly
-    track_query = urllib.parse.quote(track)
-    artist_query = urllib.parse.quote(artist)
-    headers = {"Authorization": f"Bearer {apiToken}"}
-
-    # Construct the query URL
-    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
-    response = makeApiCall(url, "GET", headers=headers)
-    if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-    if response["tracks"]["items"] == []:
-        print("ERROR: No track matching search creteria found")
-        return None
-    # Parse API response and store track information
-    track = response["tracks"]["items"][0]
-    trackResults = {
-        "id" : track["id"],
-        "name": track["name"],
-        "album": track["album"]["name"],
-        "artist": track["album"]["artists"][0]["name"],
-        "duration": str(round(track["duration_ms"] * (10**-3),0)),
-        "released": track["album"]["release_date"],
-        "url": track["external_urls"]["spotify"],
-        "uri" : track["uri"]
-    }
-    try:
-        trackResults['image'] = track["album"]["images"][1]["url"]
-    except IndexError:
-        trackResults['image'] = "Image not found"
-    for i in trackResults.values(): #remove print later 
-        print(i)
-    return trackResults
-    
-# Example of working URI for searching a song: 
-# https://api.spotify.com/v1/search?q=track%3AStars+artist%3ASkillet&type=track&limit=5   
-
+ 
 def get_top_tracks(apiToken,artist_name):
     artists_got = searchArtists(apiToken,artist_name)
     artist_id = artists_got[1]["id"]
@@ -196,135 +163,7 @@ def get_top_tracks(apiToken,artist_name):
         )
     return top_tracks
 
-def getTrackRecs(apiToken, track, artist):
-    # URL encode track and artist strings to ensure request executes properly
-    track_query = urllib.parse.quote(track)
-    artist_query = urllib.parse.quote(artist)
-    headers = {"Authorization": f"Bearer {apiToken}"}
-    # Construct the query URL to search for specified track by specified artist
-    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
-    try:
-        response = makeApiCall(url, "GET", headers=headers)
-        if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-        if response["tracks"]["items"] == []:
-            print("ERROR: No track matching search creteria found")
-            return None
-    except ValueError as e:
-        print(f"ERROR: Error in search results: {e}")
-        return None
-    
-    # Parse API response and stores track id
-    track = response["tracks"]["items"][0]
-    trackID = track["id"]
-
-    # Construct the query URL to search for the top 5 reccomended tracks based on specified track id
-    rec_query = urllib.parse.quote(trackID)
-    url = f"{APIURL}/recommendations?limit=5&seed_tracks={rec_query}"
-    try:
-        response = makeApiCall(url, "GET", headers=headers)
-        if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-        if response["tracks"][0] == []:
-            print("ERROR: No track matching search creteria found")
-            return None
-    except ValueError as e:
-        print(f"ERROR: Error in search results: {e}")
-        return None
-    
-    recs = []  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
-    for rec in response['tracks']:
-        #stores track id, album, artist and album art in dictionary
-        recsResult = {
-            "id": rec["id"],
-            "name": rec["name"],
-            "album": rec["album"]["name"],
-            "artist": rec["artists"][0]["name"],
-            "popularity" : rec["popularity"],
-            "songUrl" : rec["external_urls"]["spotify"],
-            "uri" : rec["uri"]
-        }
-        try:
-            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
-        except IndexError:
-            recsResult['imageUrl'] = "Image not found"
-        recs.append(recsResult)
-
-    urlPlaylist = f"{APIURL}/users/31vhpkpydirwzkgleucf36ec2aba/playlists"
-    apiHeaders = {"Content-Type": "application/json",
-                  "Authorization": f"Bearer {apiToken}"}
-    data = json.dumps({
-        "name": "Test Playlist",
-        "description": "Playlist",
-        "public" : True
-    })
-    return recs
-
-def create_playlist(api_token, playlist_name, track_list):
-    headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
-    url = "https://api.spotify.com/v1/me"
-    user_id = makeApiCall(url, "GET", headers=headers)["id"]
-    print(user_id)
-
-    # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
-    data = {
-        "name": playlist_name,
-        "description": "New playlist description",
-    }
-    payloaddump = json.dumps(data)
-    url = f"{APIURL}/users/{user_id}/playlists"
-    response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-    playlist_id = response["id"]
-    play_url = response["external_urls"]["spotify"]
-    # Send the POST query to insert tracks into the newly created playlist
-    url = f"{APIURL}/playlists/{playlist_id}/tracks"
-    track_data = {"uris": [track["uri"] for track in track_list]}
-    datadump = json.dumps(track_data)
-    response = makeApiCall(url, "POST", headers=headers, payload=datadump)
-    if not response:
-        print("ERROR: Response from API request is empty")
-        return None
-    else:
-        print(play_url)
-        return play_url
-
-def getRelatedArtists(apiToken, artistID):
-    # artistID can be obtained from the dictionary returned by searchArtists()
-
-    headers = {"Authorization": f"Bearer {apiToken}"}
-    # URL encode artist string to ensure request executes properly
-    query = urllib.parse.quote(artistID)
-    # Construct the query URL
-    url = f"{APIURL}/artists/{artistID}/related-artists"
-
-    try:
-        response = makeApiCall(url, "GET", headers=headers)
-        # print(json.dumps(response, indent=2))
-        if not response:
-            print("ERROR: Response from API request is empty")
-            return None
-
-        # Check if any artists were found during search
-        if len(response['artists']) == 0:
-            raise ValueError("No search results found!")
-
-    except ValueError as e:
-        print(f"ERROR: Error in search results: {e}")
-        return None
-
-    relatedArtists = []
-    for artistResult in response['artists']:
-        a = searchArtists(apiToken, artistResult['name'])
-        relatedArtists.append(a)
-
-    return relatedArtists
-
-def getUserRecs(apiToken):
+def get_user_recs(apiToken):
     # URL encode username strings to ensure request executes properly
     headers = {"Authorization": f"Bearer {apiToken}"}
     # Construct the query URL to search for a user's top 5 tracks in the past 4 weeks
@@ -372,10 +211,7 @@ def getUserRecs(apiToken):
             "id": rec["id"],
             "name": rec["name"],
             "album": rec["album"]["name"],
-            "artist": rec["artists"][0]["name"],
-            "songUrl" : rec["external_urls"]["spotify"],
-            "uri" : rec["uri"]
-
+            "artist": rec["artists"][0]["name"]
         }
         try:
             recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
@@ -391,7 +227,189 @@ def getUserRecs(apiToken):
               f"ARTIST: {recs[i]['artist']}\n"
               f"ALBUM: {recs[i]['album']}\n"
               f"PHOTO: {recs[i]['imageUrl']}\n---")
+
     return recs
+
+def search_song_details(api_token, track, artist):
+    if track == "":
+        print("ERROR: Track input is empty")
+        return None
+    if artist == "":
+        print("ERROR: Artist input is empty")
+        return None
+
+    track = parse_input(track)
+    artist = parse_input(artist)
+
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {api_token}"}
+
+    # Construct the query URL
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    response = make_api_call(url, "GET", headers)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
+    if not response["tracks"]["items"]:
+        print("ERROR: No track matching search criteria found")
+        return None
+    # Parse API response and store track information
+    track = response["tracks"]["items"][0]
+    track_results = {
+        "name": track["name"],
+        "album": track["album"]["name"],
+        "artist": track["album"]["artists"][0]["name"],
+        "duration": track["duration_ms"] * (10 ** -3),
+        "released": track["album"]["release_date"],
+        "url": track["external_urls"]["spotify"],
+    }
+    try:
+        track_results['image'] = track["album"]["images"][1]["url"]
+    except IndexError:
+        track_results['image'] = "Image not found"
+    return track_results
+
+def parse_input(string):
+    # Remove any non-alphanumeric, non-space characters from input to prevent search from failing
+    # Solution from https://stackoverflow.com/a/46414390
+    return re.sub('[^0-9a-zA-Z ]', '', string)
+
+def get_artist_releases(api_token, artist):
+    # Query all artist releases
+    # artist should be an artist dictionary returned from searchArtists()
+    try:
+        artist_id = artist['id']
+    except (KeyError, TypeError):
+        print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
+        return None
+
+    headers = {"Authorization": f"Bearer {api_token}"}
+    url = f"{APIURL}/artists/{artist_id}/albums?limit=50"
+
+    try:
+        response = make_api_call(url, "GET", headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+
+        if response["tracks"][0] == []:
+            print("ERROR: No track matching search creteria found")
+            return None
+        # Check if any releases were found during search
+        elif response['total'] == 0:
+            raise ValueError("No releases found for this artist!")
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    releases = []
+    for release in response['items']:
+        release_item = {
+            "type": release["album_group"],
+            "url": release["external_urls"]["spotify"],
+            "album_id": release["id"],
+            "album_artists": [a for a in release['artists']],
+            "title": release["name"],
+            "release_date": release["release_date"],
+            "tracks": release["total_tracks"]
+        }
+        try:
+            release_item["cover_image"] = release["images"][0]["url"]
+        except IndexError:
+            release_item["cover_image"] = "Image not found"
+        finally:
+            releases.append(release_item)
+    return releases
+  
+def get_track_recs(apiToken, track, artist):
+    # URL encode track and artist strings to ensure request executes properly
+    track_query = urllib.parse.quote(track)
+    artist_query = urllib.parse.quote(artist)
+    headers = {"Authorization": f"Bearer {apiToken}"}
+    # Construct the query URL to search for specified track by specified artist
+    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if not response["tracks"]["items"]:
+            print("ERROR: No track matching search creteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+    
+    # Parse API response and stores track id
+    track = response["tracks"]["items"][0]
+    trackID = track["id"]
+
+    # Construct the query URL to search for the top 5 reccomended tracks based on specified track id
+    rec_query = urllib.parse.quote(trackID)
+    url = f"{APIURL}/recommendations?limit=5&seed_tracks={rec_query}"
+    try:
+        response = makeApiCall(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+        if not response["tracks"][0]:
+            print("ERROR: No track matching search criteria found")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+
+    recs = []  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
+    for rec in response['tracks']:
+        #stores track id, album, artist and album art in dictionary
+        recsResult = {
+            "id": rec["id"],
+            "name": rec["name"],
+            "album": rec["album"]["name"],
+            "artist": rec["artists"][0]["name"],
+            "popularity" : rec["popularity"],
+            "songUrl" : rec["external_urls"]["spotify"],
+            "uri" : rec["uri"]
+        }
+        try:
+            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+        except IndexError:
+            recsResult['imageUrl'] = "Image not found"
+        recs.append(recsResult)
+    return recs
+
+def create_playlist(api_token, playlist_name, track_list):
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
+    url = "https://api.spotify.com/v1/me"
+    user_id = makeApiCall(url, "GET", headers=headers)["id"]
+    print(user_id)
+
+    # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
+    data = {
+        "name": playlist_name,
+        "description": "New playlist description",
+    }
+    payloaddump = json.dumps(data)
+    url = f"{APIURL}/users/{user_id}/playlists"
+    response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
+    playlist_id = response["id"]
+    play_url = response["external_urls"]["spotify"]
+    # Send the POST query to insert tracks into the newly created playlist
+    url = f"{APIURL}/playlists/{playlist_id}/tracks"
+    track_data = {"uris": [track["uri"] for track in track_list]}
+    datadump = json.dumps(track_data)
+    response = makeApiCall(url, "POST", headers=headers, payload=datadump)
+    if not response:
+        print("ERROR: Response from API request is empty")
+        return None
+    else:
+        print(play_url)
+        return play_url
 
 def get_genius_lyrics(artist_name, track_name):
     # Retrieve genius lyrics using lyricsgenius package
@@ -416,50 +434,32 @@ def get_genius_lyrics(artist_name, track_name):
     except ValueError as e:
         print(f'ERROR: {e}')
         return None
-    # Search for song object from Genius
 
-def getArtistReleases(apiToken, artist):
-    # Query all artist releases
-    # artist should be an artist dictionary returned from searchArtists()
-    try:
-        artist_id = artist['id']
-    except KeyError:
-        print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
-        return None
+def get_related_artists(api_token, artist_id):
+    # artistID can be obtained from the dictionary returned by searchArtists()
 
-    headers = {"Authorization": f"Bearer {apiToken}"}
-    url = f"{APIURL}/artists/{artist_id}/albums?limit=50"
+    headers = {"Authorization": f"Bearer {api_token}"}
+    # URL encode artist string to ensure request executes properly
+    query = urllib.parse.quote(artist_id)
+    # Construct the query URL
+    url = f"{APIURL}/artists/{artist_id}/related-artists"
 
     try:
-        response = makeApiCall(url, "GET", headers=headers)
+        response = make_api_call(url, "GET", headers)
+        # print(json.dumps(response, indent=2))
         if not response:
             print("ERROR: Response from API request is empty")
             return None
-        # Check if any releases were found during search
-        if response['total'] == 0:
-            raise ValueError("No releases found for this artist!")
+
+        # Check if any artists were found during search
+        if len(response['artists']) == 0:
+            raise ValueError("No search results found!")
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         return None
+    related_artists = []
+    for artist_result in response['artists']:
+        a = search_artists(api_token, artist_result['name'])
+        related_artists.append(a)
+    return related_artists
 
-    #print(json.dumps(response, indent=2))
-
-    releases = []
-    for release in response['items']:
-        releaseItem = {
-            "type": release["album_group"],
-            "url": release["external_urls"]["spotify"],
-            "album_id": release["id"],
-            "album_artists": [a for a in release['artists']],
-            "title": release["name"],
-            "release_date": release["release_date"],
-            "tracks": release["total_tracks"]
-        }
-        try:
-            releaseItem["cover_image"] = release["images"][0]["url"]
-        except IndexError:
-            releaseItem["cover_image"] = "Image not found"
-        finally:
-            releases.append(releaseItem)
-
-    return releases
