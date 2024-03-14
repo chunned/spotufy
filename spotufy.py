@@ -99,7 +99,6 @@ def search_artists(api_token, input_artist):
     query = urllib.parse.quote(artist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
-    artist = parse_input(input_artist)
 
     # Send the query - will return a list of matching artists
     try:
@@ -226,7 +225,7 @@ def get_track_recs(apiToken, track, artist):
             print("ERROR: Response from API request is empty")
             return None
         if not response["tracks"]["items"]:
-            print("ERROR: No track matching search creteria found")
+            print("ERROR: No track matching search criteria found")
             return None
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
@@ -236,7 +235,7 @@ def get_track_recs(apiToken, track, artist):
     track = response["tracks"]["items"][0]
     trackID = track["id"]
 
-    # Construct the query URL to search for the top 5 reccomended tracks based on specified track id
+    # Construct the query URL to search for the top 5 recommended tracks based on specified track id
     rec_query = urllib.parse.quote(trackID)
     url = f"{APIURL}/recommendations?limit=5&seed_tracks={rec_query}"
     try:
@@ -251,7 +250,7 @@ def get_track_recs(apiToken, track, artist):
         print(f"ERROR: Error in search results: {e}")
         return None
 
-    recs = []  # Will hold the track reccomendation results - insert one null value at index 0 for easier array access
+    recs = []  # Will hold the track recommendation results - insert one null value at index 0 for easier array access
     for rec in response['tracks']:
         # Stores track id, album, artist and album art in dictionary
         recsResult = {
@@ -281,7 +280,7 @@ def get_user_recs(api_token):
             print("ERROR: Response from API request is empty")
             return None
         if response['total']== 0:
-            print("ERROR: No track matching search creteria found")
+            print("ERROR: No track matching search criteria found")
             return None
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
@@ -303,14 +302,14 @@ def get_user_recs(api_token):
         if not response:
             print("ERROR: Response from API request is empty")
             return None
-        if response["tracks"][0] == []:
-            print("ERROR: No track matching search creteria found")
+        if not response["tracks"][0]:
+            print("ERROR: No track matching search criteria found")
             return None
     except ValueError as e:
         print(f"ERROR: Error in search results: {e}")
         return None
 
-    recs = ['']  # Will hold the track reccomendation results
+    recs = ['']  # Will hold the track recommendation results
     for rec in response['tracks']:
         # Stores track id, album, artist and album art in dictionary
         recsResult = {

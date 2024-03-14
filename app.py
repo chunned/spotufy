@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, session
+from flask import Flask, request, render_template, session
 from spotufy import *
 import dotenv
 import requests
@@ -75,10 +75,10 @@ def get_tracks():
             return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
         try: 
             token = session.get("access_token")
-            get_tracks = get_top_tracks(token, top_tracks)
+            get_tracks_query = get_top_tracks(token, top_tracks)
         except: 
             return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
-        return render_template("top_tracks.html", title="Search Tracks", tracks=get_tracks, artist_title=top_tracks,token=session.get("access_token"))
+        return render_template("top_tracks.html", title="Search Tracks", tracks=get_tracks_query, artist_title=top_tracks,token=session.get("access_token"))
 
 @app.route("/get_track_details", methods=["POST","GET"])
 def get_track_details():
@@ -88,7 +88,7 @@ def get_track_details():
         token = session.get("access_token")
         get_tracks_details = search_song_details(token, track_name, track_artist)
         print(get_tracks_details)
-        if get_tracks_details == None:
+        if get_tracks_details is None:
             return render_template("404.html", title="404 Not Found", token=token)
         return render_template("get_track_details.html", title="Search Tracks", tracks=get_tracks_details, artist=track_artist, name=track_name,token=session.get("access_token"))
 
@@ -119,16 +119,16 @@ def search_related():
             print(get_related_artist)
             return render_template("get_related.html", title="Related Artists", related_artists=get_related_artist, matched_artist=name, token=session.get("access_token"))
         except: 
-            return render_template("404.html",title="404 Not Found",token=token)
+            return render_template("404.html",title="404 Not Found",token=session.get("access_token"))
         
 @app.route("/create_playlist",methods=["POST"])
 def create_playlist_post():
     get_playlist_name = request.form['playlist_name']
     playlist_name = f"Recommended Songs based on {get_playlist_name.title()}"
-    tracks = ast.literal_eval(request.form['tracks'])
+    tracks_query = ast.literal_eval(request.form['tracks'])
     token = session.get("access_token")
 
-    link = create_playlist(token, playlist_name, tracks)
+    link = create_playlist(token, playlist_name, tracks_query)
     return redirect(link)
 
 @app.route("/my_recommendations",methods=["GET"])
@@ -138,15 +138,18 @@ def my_recommendations():
         my_recs = get_user_recs(token)
         return render_template("my_recommendations.html", title="My Recommendations", recs=my_recs,token=token)
     except:
-        return render_template("404.html",token=token)
+        return render_template("404.html",token=session.get("access_token"))
 
 @app.route("/get_lyrics",methods=["GET","POST"])
 def get_lyrics():
     if  request.method == "POST":
         artist_name = request.form.get("search_lyric_artist")
         artist_song = request.form.get("search_lyric_track")
-        get_lyrics = get_genius_lyrics(artist_name,artist_song)
-    return render_template("get_lyrics.html", title="Lyrics", token=session.get("access_token"), lyrics=get_lyrics, name=artist_song, artist=artist_name)
+        get_lyrics_query = get_genius_lyrics(artist_name,artist_song)
+        return render_template("get_lyrics.html", title="Lyrics", token=session.get("access_token"),
+                               lyrics=get_lyrics_query, name=artist_song, artist=artist_name)
+    else:
+        return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
 
 @app.route("/get_artist_releases",methods=["GET","POST"])
 def get_artist_release():
