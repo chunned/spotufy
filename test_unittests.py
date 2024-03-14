@@ -1,7 +1,7 @@
 import unittest
 from main import *
 
-token = requestApiToken()
+token = request_api_token()
 
 class make_api_call_test(unittest.TestCase):
     '''Test module to test API call function in `main.py`'''
@@ -27,16 +27,16 @@ class request_api_token_test(unittest.TestCase):
     '''Test module to test request API token function in `main.py`'''
     def test_token_received(self):
         '''API token string should be returned and not be None'''
-        self.assertTrue(None!=requestApiToken())
+        self.assertTrue(None!=request_api_token())
 
 class search_artists_test(unittest.TestCase):
     '''Test module to test search artists function in `main.py'''
     def test_valid_return(self):
         '''Function should return a non-empty list if given good input'''
-        self.assertTrue([]!=searchArtists(token, "Al Green"))
+        self.assertTrue([]!=search_artists(token, "Al Green"))
     def test_invalid_return(self):
         '''Function should return None if given bad input (no matching artist from search)'''
-        self.assertTrue(None==searchArtists(token, "sdfouhxiuheiuwer"))
+        self.assertTrue(None==search_artists(token, "sdfouhxiuheiuwer"))
 
 class search_song_details_test(unittest.TestCase):
     '''Test module to test search song details function in `main.py`'''
