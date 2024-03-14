@@ -58,10 +58,12 @@ def search_artist():
             return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
         try: 
             token = session.get("access_token")
-            get_artists = searchArtists(token, name)
+            print(token)
+            get_artists = search_artists(token, name)
+            print(get_artists)
+            return render_template("get_search.html", title="Search Artist", artists=get_artists, matched_artist=name,token=session.get("access_token"))
         except: 
             return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
-        return render_template("get_search.html", title="Search Artist", artists=get_artists, matched_artist=name,token=session.get("access_token"))
 
 @app.route("/get_top_tracks", methods=["POST","GET"])
 def get_tracks():
@@ -82,7 +84,7 @@ def get_track_details():
         track_artist = request.form.get("search_details_artist")
         track_name = request.form.get("search_details_track")
         token = session.get("access_token")
-        get_tracks_details = searchSongDetails(token, track_name, track_artist)
+        get_tracks_details = search_song_details(token, track_name, track_artist)
         print(get_tracks_details)
         if get_tracks_details == None:
             return render_template("404.html", title="404 Not Found", token=token)
@@ -95,7 +97,7 @@ def get_recommendations():
             track_artist = request.form.get("recommendations_artist")
             track_name = request.form.get("recommendations_song")
             token = session.get("access_token")
-            get_track_recommendations = getTrackRecs(token, track_name, track_artist)
+            get_track_recommendations = get_track_recs(token, track_name, track_artist)
             #play_link = create_playlist(token, f"Recommended Songs based on {track_artist}", get_track_recommendations)
             return render_template("get_recommendations.html", title="Get Recommendations", tracks=get_track_recommendations, artist=track_artist, name=track_name, token=session.get("access_token"))
         except:
@@ -110,9 +112,10 @@ def search_related():
             return render_template("404.html", title="404 Not Found", token=session.get("access_token"))
         try: 
             token = session.get("access_token")
-            get_artists = searchArtists(token, name)
-            get_related_artists = getRelatedArtists(token, get_artists[1]["id"])
-            return render_template("get_related.html", title="Related Artists", related_artists=get_related_artists, matched_artist=name, token=session.get("access_token"))
+            get_artists = search_artists(token, name)
+            get_related_artist = get_related_artists(token, get_artists[1]["id"])
+            print(get_related_artist)
+            return render_template("get_related.html", title="Related Artists", related_artists=get_related_artist, matched_artist=name, token=session.get("access_token"))
         except: 
             return render_template("404.html",title="404 Not Found",token=token)
         
@@ -130,7 +133,7 @@ def create_playlist_post():
 def my_recommendations():
     try: 
         token = session.get("access_token")
-        my_recs = getUserRecs(token)
+        my_recs = get_user_recs(token)
         return render_template("my_recommendations.html", title="My Recommendations", recs=my_recs,token=token)
     except:
         return render_template("404.html",token=token)
@@ -144,12 +147,12 @@ def get_lyrics():
     return render_template("get_lyrics.html", title="Lyrics", token=session.get("access_token"), lyrics=get_lyrics, name=artist_song, artist=artist_name)
 
 @app.route("/get_artist_releases",methods=["GET","POST"])
-def get_artist_releases():
+def get_artist_release():
     if request.method == "POST":
         token = session.get("access_token")
         name = request.form.get("search_artist_releases")
-        get_artists = searchArtists(token,name)
-        get_discography =  getArtistReleases(token,get_artists[1])
+        get_artists = search_artists(token,name)
+        get_discography =  get_artist_releases(token,get_artists[1])
         return render_template("get_discography.html", title="Artist Discography", token=session.get("access_token"), name=name, discography=get_discography)
 
 @app.route("/login", methods=["POST","GET"])
