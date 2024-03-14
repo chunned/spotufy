@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="">    
+        <div class="contents">    
+            <h1> Recommendations Based On Your Listening History  </h1>
+            <!--- for loop to print out all the elements from the tracks list in the main.py file -->
+        </div>
+        <hr>
+        {% for track in recs[1:] %} 
+        <div class="artist_output">
+            <div class="text">
+                <p>Recommendation #{{ loop.index}}</p> 
+                <p>Name: {{ track['name'] }}</p>
+                <p>Artist: {{ track['artist'] }}</p>
+                <p>Album: {{ track['album'] }}</p>
+                <p><a href="{{ track['songUrl'] }}"> Open in Browser  </a> </p>
+                <p><a href="{{ track['uri'] }}"> Open in Spotify App </a> </p>
+            </div>
+            <img src="{{ track['imageUrl'] }}" alt="Artist Image" class="artist_image">
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+{% endblock content %}

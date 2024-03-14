@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="main_body"> 
+
+        <h1> Add Your API Key </h1>
+        <p1> If you wish to add custom playlists to your account using the API, you must specify your API key. <br>
+            Instructions on how to obtain your API key are provided below. <br><br>
+            1. Go to <a href="https://developer.spotify.com">https://developer.spotify.com </a> <br>
+            2. Create a new app <br>
+            3. Go into the newly created app <br>
+            4. Go to Basic information tab <br>
+            </p1>
+    </div>
+    <form action="#" method="post" class="form-login"> 
+        <p> API Key :   </p>
+        <p> <input type="text" name="user_api_key" placeholder="Enter your API key here"/> </p>
+        <p> <input type="submit" /></p>
+    </form>
+
+{% endblock content %}
