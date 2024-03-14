@@ -3,6 +3,8 @@ import dotenv
 import urllib.parse
 import re
 import json
+import base64
+import webbrowser
 import lyricsgenius
 
 APIURL = 'https://api.spotify.com/v1'
@@ -19,6 +21,7 @@ def make_api_call(url, method, headers=None, payload=None):
         return None
     except requests.exceptions.MissingSchema as e:
         print(f"ERROR: Missing schema info. Ensure the URL is valid: {e}")
+        return None
     else:
         return response.json() if response.text else None
 
@@ -37,15 +40,39 @@ def request_api_token():
               'CLIENT_SECRET=<client secret>', end="")
         return None
 
+    client_id = apiSecrets["CLIENT_ID"]
+    client_secret = apiSecrets["CLIENT_SECRET"]
     try:
-        api_url = "https://accounts.spotify.com/api/token"
-        api_headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        api_data = {"grant_type": "client_credentials",
-                   "client_id": api_secrets["CLIENT_ID"],
-                   "client_secret": api_secrets["CLIENT_SECRET"]}
+        # Authorize with relevant scopes
+        # Authorization method adapted from https://python.plainenglish.io/bored-of-libraries-heres-how-to-connect-to-the-spotify-api-using-pure-python-bd31e9e3d88a
+        scope = 'playlist-modify-public playlist-modify-private'
+        params = {
+            'response_type': 'code',
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': 'https://chunned.github.io/test/login-success'
+        }
+        webbrowser.open("https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params))
+        code = input("Enter the code from the end of the URL: ")
+    except ValueError:
+        print("Invalid authorization code length. Please try again and make sure you copy the full code.")
+        return None
 
-        response = make_api_call(api_url, "POST", api_headers, api_data)
-        return response["access_token"]
+    try:
+        apiUrl = "https://accounts.spotify.com/api/token"
+        encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+                      "Authorization": "Basic " + encodedCreds}
+        apiData = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "https://chunned.github.io/test/login-success"
+        }
+
+        resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+        # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+        data = json.loads(resp.content.decode('utf-8'))
+        return data["access_token"]
     except KeyError:
         print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
         return None
@@ -57,7 +84,7 @@ def search_artists(api_token, input_artist):
     query = urllib.parse.quote(artist)
     # Construct the query URL
     url = f"{APIURL}/search?q={query}&type=artist&limit=5"
-    # Can be removed
+    artist = parseInput(inputArtist)
 
     # Send the query - will return a list of matching artists
     try:
@@ -172,7 +199,7 @@ def get_artist_releases(api_token, artist):
     # artist should be an artist dictionary returned from searchArtists()
     try:
         artist_id = artist['id']
-    except KeyError:
+    except (KeyError, TypeError):
         print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
         return None
 
@@ -209,7 +236,48 @@ def get_artist_releases(api_token, artist):
         finally:
             releases.append(release_item)
     return releases
-
+  
+def create_playlist(api_token, playlist_name, track_list):
+    headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
+    url = "https://api.spotify.com/v1/me"
+    try:
+        user_id = makeApiCall(url, "GET", headers=headers)["id"]
+    except TypeError:
+        print('ERROR: No valid user ID returned. Ensure your authorization token is correct.')
+    playlist_id = ""
+    # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
+    try:
+        if playlist_name:
+            data = {
+                "name": playlist_name,
+                "description": "New playlist description",
+            }
+            payloaddump = json.dumps(data)
+            url = f"{APIURL}/users/{user_id}/playlists"
+            response = makeApiCall(url, "POST", headers=headers, payload=payloaddump)
+            if not response:
+                print("ERROR: Response from API request is empty")
+                return None
+            playlist_id = response["id"]
+        else:
+            raise ValueError("No playlist name provided")
+    except ValueError as e:
+        print(f'ERROR: {e}'
+              )
+    try:
+        if playlist_id:
+            # Send the POST query to insert tracks into the newly created playlist
+            url = f"{APIURL}/playlists/{playlist_id}/tracks"
+            data = {"uris": [track["uri"] for track in track_list]}
+            data = json.dumps(data, indent=2)
+            response = makeApiCall(url, "POST", headers=headers, payload=data)
+            if not response:
+                raise ValueError("No response from API query. Ensure track URIs are correct.")
+        else:
+          raise ValueError("No playlist ID returned")
+    except ValueError as e:
+        print(f'ERROR: {e}')
+ 
 def get_genius_lyrics(artist_name, track_name):
     # Retrieve genius lyrics using lyricsgenius package
     secrets = dotenv.dotenv_values('.env')
@@ -264,5 +332,5 @@ def get_related_artists(api_token, artist_id):
     for artist_result in response['artists']:
         a = search_artists(api_token, artist_result['name'])
         related_artists.append(a)
+    return relatedArtists
 
-    return related_artists
