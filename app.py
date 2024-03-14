@@ -4,6 +4,9 @@ import dotenv
 import requests
 import ast
 
+# Videos used to make Flask skeleton : https://www.youtube.com/watch?v=dam0GPOAvVI
+#https://www.youtube.com/watch?v=oVA0fD13NGI, https://www.youtube.com/watch?v=MwZwr5Tvyxo
+
 api_secrets = dotenv.dotenv_values('.env')
 client_id = api_secrets["CLIENT_ID"]
 client_secret = api_secrets["CLIENT_SECRET"]
