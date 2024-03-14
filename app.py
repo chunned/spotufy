@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, session
+from flask import Flask, request, redirect, render_template, session
 from spotufy import *
 import dotenv
 import requests
@@ -8,11 +8,17 @@ import ast
 # https://www.youtube.com/watch?v=dam0GPOAvVI
 # https://www.youtube.com/watch?v=oVA0fD13NGI
 # https://www.youtube.com/watch?v=MwZwr5Tvyxo
-
-api_secrets = dotenv.dotenv_values('.env')
-client_id = api_secrets["CLIENT_ID"]
-client_secret = api_secrets["CLIENT_SECRET"]
-secret_app_key = api_secrets["SECRET_KEY"]
+try:
+    api_secrets = dotenv.dotenv_values('.env')
+    client_id = api_secrets["CLIENT_ID"]
+    client_secret = api_secrets["CLIENT_SECRET"]
+    secret_app_key = api_secrets["SECRET_KEY"]
+    flask_host = api_secrets["FLASK_HOST"]
+    flask_port = api_secrets["FLASK_PORT"]
+    callback_url = api_secrets["CALLBACK_URL"]
+except:
+    print(".env either does not exist or does not contain the correct values. Make sure the following variables are set:")
+    print("CLIENT_ID\nCLIENT_SECRET\nSECRET_KEY\nFLASK_HOST\nFLASK_PORT\nCALLBACK_URL")
 
 app = Flask(__name__)
 app.secret_key = f"{secret_app_key}"
@@ -177,7 +183,7 @@ def callback():
         req_body = {
             "code" : request.args["code"],
             "grant_type" : "authorization_code",
-            "redirect_uri" : 'http://localhost:9191/callback',
+            "redirect_uri" : callback_url,
             "client_id" : client_id,
             "client_secret" : client_secret
         }
@@ -190,4 +196,4 @@ def callback():
         return render_template("404.html")
 
 if __name__ == '__main__':
-    app.run(host="localhost", debug=True, port=9191)
+    app.run(host=flask_host, debug=True, port=flask_port)

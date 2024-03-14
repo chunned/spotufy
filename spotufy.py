@@ -6,10 +6,15 @@ import json
 import lyricsgenius
 from flask import redirect
 
+# Base API URL used for all API requests
 APIURL = 'https://api.spotify.com/v1'
 
 
 ################ Core Functions ################
+# These functions do not constitute features,  #
+# but are used by the functions that make up   #
+# the features.                                #
+################################################
 
 def make_api_call(url, method, headers=None, payload=None):
     # Generalized function to make any and all API requests as needed by the application
@@ -41,13 +46,15 @@ def request_api_token():
         return None
 
     client_id = api_secrets["CLIENT_ID"]
-    
+
+    # Scopes define what permissions the application has to perform on a user's behalf.
+    # Read more: https://developer.spotify.com/documentation/web-api/concepts/scopes
     scope = 'playlist-modify-public playlist-modify-private user-top-read'
     params = {
             'response_type': 'code',
             'client_id': client_id,
             'scope': scope,
-            'redirect_uri': 'http://localhost:9191/callback',
+            'redirect_uri': api_secrets["CALLBACK_URL"],
             "show_dialog" : True
         }
     SITE_URL = "https://accounts.spotify.com/authorize"
@@ -67,7 +74,7 @@ def create_playlist(api_token, playlist_name, track_list):
     # Send the POST query to create the playlist. Will create a playlist for later inserting tracks into
     data = {
         "name": playlist_name,
-        "description": "New playlist description",
+        "description": "Playlist created by SpOTUfy!",
     }
     payload = json.dumps(data)
     url = f"{APIURL}/users/{user_id}/playlists"
@@ -93,6 +100,7 @@ def create_playlist(api_token, playlist_name, track_list):
 ################ Feature Functions ################
 
 def search_artists(api_token, input_artist):
+    # Searches artist by name and returns a list of matches
     headers = {"Authorization": f"Bearer {api_token}"}
     # URL encode artist string to ensure request executes properly
     artist = parse_input(input_artist)
@@ -134,6 +142,7 @@ def search_artists(api_token, input_artist):
     return artists
 
 def get_top_tracks(apiToken,artist_name):
+    # Get the most popular tracks for a given artist
     artists_got = search_artists(apiToken,artist_name)
     artist_id = artists_got[1]["id"]
     headers = {"Authorization": f"Bearer {apiToken}"}
@@ -171,6 +180,7 @@ def get_top_tracks(apiToken,artist_name):
     return top_tracks
 
 def search_song_details(api_token, track, artist):
+    # Return information about a given track
     if track == "":
         print("ERROR: Track input is empty")
         return None
@@ -213,6 +223,7 @@ def search_song_details(api_token, track, artist):
     return track_results
 
 def get_track_recs(apiToken, track, artist):
+    # Get a list of recommended tracks based on a single input track
     # URL encode track and artist strings to ensure request executes properly
     track_query = urllib.parse.quote(track)
     artist_query = urllib.parse.quote(artist)
@@ -270,6 +281,7 @@ def get_track_recs(apiToken, track, artist):
     return recs
 
 def get_user_recs(api_token):
+    # Get recommendations based on user's top tracks
     # URL encode username strings to ensure request executes properly
     headers = {"Authorization": f"Bearer {api_token}"}
     # Construct the query URL to search for a user's top 5 tracks in the past 4 weeks
@@ -326,6 +338,7 @@ def get_user_recs(api_token):
     return recs
 
 def get_related_artists(api_token, artist_id):
+    # Search for artists related to a given input artist and return matching results
     # artistID can be obtained from the dictionary returned by search_artists()
 
     headers = {"Authorization": f"Bearer {api_token}"}
@@ -352,7 +365,7 @@ def get_related_artists(api_token, artist_id):
     return related_artists
 
 def get_genius_lyrics(artist_name, track_name):
-    # Retrieve genius lyrics using lyricsgenius package
+    # Retrieve Genius.com lyrics using lyricsgenius package
     secrets = dotenv.dotenv_values('.env')
     genius_token = secrets["GENIUS_TOKEN"]
     genius = lyricsgenius.Genius(genius_token)
