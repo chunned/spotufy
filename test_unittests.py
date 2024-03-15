@@ -120,7 +120,7 @@ class get_artist_releases_test(unittest.TestCase):
         self.assertTrue(type(get_artist_releases(token, search_artists(token, "Al Green")))==type([]))
 
 class get_top_tracks_test(unittest.TestCase):
-    """Test module to test search artists function in `main.py"""
+    """Test module to test search artists function in `spotufy.py"""
     def test_valid_return(self):
         """Function should return a non-empty list if given good input"""
         self.assertTrue([]!= get_top_tracks(token, "Elton John"))
@@ -133,6 +133,7 @@ class get_top_tracks_test(unittest.TestCase):
 
 
 class get_genius_lyrics_test(unittest.TestCase):
+    """Test module to test get Genius lyrics function in 'spotufy.py'"""
     def test_valid_return(self):
         """Function should return a non-empty string for valid input"""
         result = get_genius_lyrics("Bob Marley", "Lively Up Yourself")
@@ -151,6 +152,59 @@ class get_genius_lyrics_test(unittest.TestCase):
     def test_missing_artist_input(self):
         result = get_genius_lyrics("", "Lively Up Yourself")
         self.assertTrue(result is None)
+
+
+class get_related_artists_test(unittest.TestCase):
+    """Test module to test get related artists function in 'spotufy.py'"""
+    def test_valid_return(self):
+        """Should return a nonempty list for valid input"""
+        result = get_related_artists(token, '0TnOYISbd1XYRBk9myaseg')
+        self.assertTrue(isinstance(result, list) and result is not None)
+    def test_invalid_input(self):
+        """Should return None for invalid input"""
+        result = get_related_artists(token, 23423)
+        self.assertTrue(result is None)
+
+
+class get_user_recs_test(unittest.TestCase):
+    """Test module to test get_user_recs function in 'spotufy.py'"""
+    def test_valid_return(self):
+        """Should return a nonempty list for valid input"""
+        result = get_user_recs(token)
+        self.assertTrue(isinstance(result, list) and result is not None)
+    def test_invalid_input(self):
+        """Should return None in the event of an invalid input token"""
+        result = get_user_recs('asdf')
+        self.assertTrue(result is None)
+
+
+class get_track_recs_test(unittest.TestCase):
+    """Test module to test get_track_recs function in 'spotufy.py'"""
+    def test_valid_return(self):
+        """Should return a nonempty list for valid input"""
+        result = get_track_recs(token, 'Bend Down Low', 'Bob Marley')
+        self.assertTrue(isinstance(result, list) and result is not None)
+    def test_invalid_input_token(self):
+        """Should return None in the event of an invalid input token"""
+        result = get_track_recs('asdf', 'Rednecks', 'Randy Newman')
+        self.assertTrue(result is None)
+
+    def test_invalid_input_track(self):
+        """Should return None in the event of an invalid input track"""
+        result = get_track_recs(token, '', 'Josh Lowe')
+        self.assertTrue(result is None)
+    def test_invalid_input_artist(self):
+        """Should return None in the event of an invalid input artist"""
+        result = get_track_recs(token, 'DevOps', '')
+        self.assertTrue(result is None)
+
+
+class create_playlist_test(unittest.TestCase):
+    """Test module to test create_playlist function in 'spotufy.py'"""
+    def test_valid_return(self):
+        """Should return playlist URL if playlist is created successfully"""
+        result = create_playlist(token, 'Test', [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
+        self.assertTrue(isinstance(result, str))
 
 # # Unit test template
 # class name_test(unittest.TestCase):
