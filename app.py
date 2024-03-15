@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, render_template, session
 from spotufy import *
-import dotenv
+import os
 import requests
 import ast
 
@@ -9,15 +9,15 @@ import ast
 # https://www.youtube.com/watch?v=oVA0fD13NGI
 # https://www.youtube.com/watch?v=MwZwr5Tvyxo
 try:
-    api_secrets = dotenv.dotenv_values('.env')
-    client_id = api_secrets["CLIENT_ID"]
-    client_secret = api_secrets["CLIENT_SECRET"]
-    secret_app_key = api_secrets["SECRET_KEY"]
-    flask_host = api_secrets["FLASK_HOST"]
-    flask_port = api_secrets["FLASK_PORT"]
-    callback_url = api_secrets["CALLBACK_URL"]
-except:
-    print(".env either does not exist or does not contain the correct values. Make sure the following variables are set:")
+    client_id = os.getenv("CLIENT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
+    secret_app_key = os.getenv("SECRET_KEY")
+    flask_host = os.getenv("FLASK_HOST")
+    flask_port = os.getenv("FLASK_PORT")
+    callback_url = os.getenv("CALLBACK_URL")
+except Exception as e:
+    print(f"ERROR: {e}")
+    print("Make sure the following environment variables are set:")
     print("CLIENT_ID\nCLIENT_SECRET\nSECRET_KEY\nFLASK_HOST\nFLASK_PORT\nCALLBACK_URL")
 
 app = Flask(__name__)

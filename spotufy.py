@@ -1,5 +1,5 @@
 import requests
-import dotenv
+import os
 import urllib.parse
 import re
 import json
@@ -35,8 +35,9 @@ def request_api_token():
     # Function to request an API token from Spotify - valid for 1hr
     # Read the app's client ID and secret from .env file
     try:
-        api_secrets = dotenv.dotenv_values('.env')
-        if not api_secrets:
+        client_id = os.getenv("CLIENT_ID")
+        callback_url = os.getenv("CALLBACK_URL")
+        if not client_id:
             raise ValueError
     except ValueError:
         print('Reading .env file failed - no data read.\n' +
@@ -45,7 +46,7 @@ def request_api_token():
               'CLIENT_SECRET=<client secret>', end="")
         return None
 
-    client_id = api_secrets["CLIENT_ID"]
+
 
     # Scopes define what permissions the application has to perform on a user's behalf.
     # Read more: https://developer.spotify.com/documentation/web-api/concepts/scopes
@@ -54,7 +55,7 @@ def request_api_token():
             'response_type': 'code',
             'client_id': client_id,
             'scope': scope,
-            'redirect_uri': api_secrets["CALLBACK_URL"],
+            'redirect_uri': callback_url,
             "show_dialog" : True
         }
     SITE_URL = "https://accounts.spotify.com/authorize"
@@ -366,8 +367,7 @@ def get_related_artists(api_token, artist_id):
 
 def get_genius_lyrics(artist_name, track_name):
     # Retrieve Genius.com lyrics using lyricsgenius package
-    secrets = dotenv.dotenv_values('.env')
-    genius_token = secrets["GENIUS_TOKEN"]
+    genius_token = os.getenv("GENIUS_TOKEN")
     genius = lyricsgenius.Genius(genius_token)
     genius.response_format = 'html'
     try:
