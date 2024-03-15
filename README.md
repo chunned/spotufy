@@ -2,10 +2,12 @@
 ![SpOTUfy is an application for the purpose of providing greater value to the everyday Spotify user who wants to get more out of their experience. 
 ](static/homepage.gif)
 
-# Deployment Instructions
-If you are Josh, **use the docker-compose.yml** file we submitted to Canvas, which has environment variables already filled out. Then, just run `docker compose up` and visit `http://localhost:9191`.
+# Deployment
+There are two options for deployment:
+- Clone the main branch, place the `.env` file we submitted to Canvas in the repository directory, install the required packages with Pip, then simply `python app.py`
+- Alternatively, use the `docker-compose.yml` we submitted to Canvas. `docker compose up`
 
-
+Either way, visit `http://localhost:9191` to access the application.
 
 # Features 
 ## Backlog

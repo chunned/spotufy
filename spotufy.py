@@ -265,7 +265,7 @@ def get_track_recs(apiToken, track, artist):
     recs = []  # Will hold the track recommendation results - insert one null value at index 0 for easier array access
     for rec in response['tracks']:
         # Stores track id, album, artist and album art in dictionary
-        recsResult = {
+        recs_result = {
             "id": rec["id"],
             "name": rec["name"],
             "album": rec["album"]["name"],
@@ -275,10 +275,10 @@ def get_track_recs(apiToken, track, artist):
             "uri" : rec["uri"]
         }
         try:
-            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+            recs_result['imageUrl'] = rec["album"]["images"][0]["url"]
         except IndexError:
-            recsResult['imageUrl'] = "Image not found"
-        recs.append(recsResult)
+            recs_result['imageUrl'] = "Image not found"
+        recs.append(recs_result)
     return recs
 
 def get_user_recs(api_token):
@@ -325,17 +325,20 @@ def get_user_recs(api_token):
     recs = ['']  # Will hold the track recommendation results
     for rec in response['tracks']:
         # Stores track id, album, artist and album art in dictionary
-        recsResult = {
+        recs_result = {
             "id": rec["id"],
             "name": rec["name"],
             "album": rec["album"]["name"],
-            "artist": rec["artists"][0]["name"]
+            "artist": rec["artists"][0]["name"],
+            "popularity" : rec["popularity"],
+            "songUrl" : rec["external_urls"]["spotify"],
+            "uri" : rec["uri"]
         }
         try:
-            recsResult['imageUrl'] = rec["album"]["images"][0]["url"]
+            recs_result['imageUrl'] = rec["album"]["images"][0]["url"]
         except IndexError:
-            recsResult['imageUrl'] = "Image not found"
-        recs.append(recsResult)
+            recs_result['imageUrl'] = "Image not found"
+        recs.append(recs_result)
     return recs
 
 def get_related_artists(api_token, artist_id):
