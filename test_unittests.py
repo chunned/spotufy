@@ -77,11 +77,13 @@ class make_api_call_test(unittest.TestCase):
         headers = {"Authorization": f"Bearer {token}"}
         self.assertTrue(None==make_api_call(url, "GET", headers))
 
+
 class request_api_token_test(unittest.TestCase):
     """Test module to test request API token function in `spotufy.py`"""
     def test_token_received(self):
         """API token string should be returned and not be None"""
         self.assertTrue(None!=request_api_token())
+
 
 class search_artists_test(unittest.TestCase):
     """Test module to test search artists function in `spotufy.py"""
@@ -91,6 +93,7 @@ class search_artists_test(unittest.TestCase):
     def test_invalid_return(self):
         """Function should return None if given bad input (no matching artist from search)"""
         self.assertTrue(None==search_artists(token, "sdfouhxiuheiuwer"))
+
 
 class search_song_details_test(unittest.TestCase):
     """Test module to test search song details function in `spotufy.py`"""
@@ -104,11 +107,13 @@ class search_song_details_test(unittest.TestCase):
         """Function should return a dictionary of track information if given good input"""
         self.assertTrue(type(search_song_details(token, "Resonance", "Home")) == type({}))
 
+
 class parse_input_test(unittest.TestCase):
     """Test module to test parse input function in `spotufy.py`"""
     def test_valid_return(self):
         """Function should return a non-empty string when called"""
         self.assertTrue(type(parse_input("ABxcII29238JJb"))==str and None!=parse_input("ABxcII29238JJb"))
+
 
 class get_artist_releases_test(unittest.TestCase):
     """Test module to test get artist releases function in `spotufy.py`"""
@@ -118,6 +123,7 @@ class get_artist_releases_test(unittest.TestCase):
     def test_valid_input(self):
         """Function should return an array of release items if given valid input and artist has releases"""
         self.assertTrue(type(get_artist_releases(token, search_artists(token, "Al Green")))==type([]))
+
 
 class get_top_tracks_test(unittest.TestCase):
     """Test module to test search artists function in `spotufy.py"""
@@ -205,13 +211,6 @@ class create_playlist_test(unittest.TestCase):
         """Should return playlist URL if playlist is created successfully"""
         result = create_playlist(token, 'Test', [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
         self.assertTrue(isinstance(result, str))
-
-# # Unit test template
-# class name_test(unittest.TestCase):
-#     '''Test module to test __ function in `spotufy.py`'''
-#     def test_name(self):
-#         ''''''
-#         self.assertTrue()
 
 if __name__ == '__main__':
         unittest.main()
