@@ -212,5 +212,15 @@ class create_playlist_test(unittest.TestCase):
         result = create_playlist(token, 'Test', [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
         self.assertTrue(isinstance(result, str))
 
+    def test_invalid_input_artist(self):
+        """Should return None given invalid input artist"""
+        result = create_playlist(token, [], [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
+        self.assertTrue(result is None)
+
+    def test_invalid_input_tracks(self):
+        """Should return None given invalid input tracks"""
+        result = create_playlist(token, 'Bob Marley', '')
+        self.assertTrue(result is None)
+
 if __name__ == '__main__':
         unittest.main()
