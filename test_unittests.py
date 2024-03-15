@@ -65,6 +65,18 @@ class get_artist_releases_test(unittest.TestCase):
         """Function should return an array of release items if given valid input and artist has releases"""
         self.assertTrue(type(get_artist_releases(token, search_artists(token, "Al Green")))==type([]))
 
+class get_top_tracks_test(unittest.TestCase):
+    '''Test module to test search artists function in `main.py'''
+    def test_valid_return(self):
+        '''Function should return a non-empty list if given good input'''
+        self.assertTrue([]!= get_top_tracks(token, "Elton John"))
+    def test_empty_input(self):
+        '''Function should return None if given bad input (artist parameter empty)'''
+        self.assertTrue(None==(get_top_tracks(token, "")))
+    def test_invalid_input(self):
+        '''Function should return None if given bad input (artist not found, no tracks returned)'''
+        self.assertTrue(None==get_top_tracks(token, "asnldnwkandajdnakjdnakjndwkjdnaknsdnjwjknad"))
+
 # # Unit test template
 # class name_test(unittest.TestCase):
 #     '''Test module to test __ function in `spotufy.py`'''
