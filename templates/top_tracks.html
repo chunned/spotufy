@@ -1,8 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
     <div class="">
+        <div class="contents">
             <h1> {{artist_title|title}}'s Top 5 Most Popular Songs  </h1>
-            <!--- for loop to print out all the elements from the tracks list in the main.py file -->
+            <form action="{{ url_for('create_playlist_post') }}" method="post" class="custom_playlist">
+                <input type="hidden" name="playlist_name" value="{{ artist_title }}">
+                <input type="hidden" name="tracks" value="{{ tracks }}">
+                <button type="submit" class="playlist_button">Create Playlist</button>
+            </form>
+            <!--- for loop to print out all the elements from the tracks list in the spotufy.py file -->
+        </div>
         <hr>
         {% for track in tracks[:5] %} 
         <div class="artist_output">
