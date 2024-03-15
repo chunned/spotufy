@@ -1,5 +1,59 @@
 import unittest
 from spotufy import *
+import webbrowser
+import base64
+
+# Due to how the authorization process is handled in Flask, the relevant function cannot be easily used in testing
+# Thus, we use an old version of the function from https://github.com/Ontario-Tech-NITS/final-project-group-1/pull/10/commits/ff6b4f74d3948b038104165dad07b55fe7f9af3b#diff-b10564ab7d2c520cdd0243874879fb0a782862c3c902ab535faabe57d5a505e1
+def request_api_token():
+    # Function to request an API token from Spotify - valid for 1hr
+    # Read the app's client ID and secret from .env file
+    try:
+        apiSecrets = dotenv.dotenv_values('.env')
+        if not apiSecrets:
+            raise ValueError
+    except ValueError:
+        print('Reading .env file failed - no data read.\n' +
+              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
+              'CLIENT_ID=<client id>\n' +
+              'CLIENT_SECRET=<client secret>', end="")
+        return None
+
+    client_id = apiSecrets["CLIENT_ID"]
+    client_secret = apiSecrets["CLIENT_SECRET"]
+    try:
+        # Authorize with relevant scopes
+        # Authorization method adapted from https://python.plainenglish.io/bored-of-libraries-heres-how-to-connect-to-the-spotify-api-using-pure-python-bd31e9e3d88a
+        scope = 'playlist-modify-public playlist-modify-private user-top-read'
+        params = {
+            'response_type': 'code',
+            'client_id': client_id,
+            'scope': scope,
+            'redirect_uri': 'https://chunned.github.io/test/login-success'
+        }
+        webbrowser.open("https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params))
+        code = input("Enter the code from the end of the URL: ")
+    except ValueError:
+        print("Invalid authorization code length. Please try again and make sure you copy the full code.")
+        return None
+
+    try:
+        apiUrl = "https://accounts.spotify.com/api/token"
+        encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+                      "Authorization": "Basic " + encodedCreds}
+        apiData = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": "https://chunned.github.io/test/login-success"
+        }
+        resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+        # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+        data = json.loads(resp.content.decode('utf-8'))
+        return data["access_token"]
+    except KeyError:
+        print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
+        return None
 
 token = request_api_token()
 
@@ -66,16 +120,37 @@ class get_artist_releases_test(unittest.TestCase):
         self.assertTrue(type(get_artist_releases(token, search_artists(token, "Al Green")))==type([]))
 
 class get_top_tracks_test(unittest.TestCase):
-    '''Test module to test search artists function in `main.py'''
+    """Test module to test search artists function in `main.py"""
     def test_valid_return(self):
-        '''Function should return a non-empty list if given good input'''
+        """Function should return a non-empty list if given good input"""
         self.assertTrue([]!= get_top_tracks(token, "Elton John"))
     def test_empty_input(self):
-        '''Function should return None if given bad input (artist parameter empty)'''
+        """Function should return None if given bad input (artist parameter empty)"""
         self.assertTrue(None==(get_top_tracks(token, "")))
     def test_invalid_input(self):
-        '''Function should return None if given bad input (artist not found, no tracks returned)'''
+        """Function should return None if given bad input (artist not found, no tracks returned)"""
         self.assertTrue(None==get_top_tracks(token, "asnldnwkandajdnakjdnakjndwkjdnaknsdnjwjknad"))
+
+
+class get_genius_lyrics_test(unittest.TestCase):
+    def test_valid_return(self):
+        """Function should return a non-empty string for valid input"""
+        result = get_genius_lyrics("Bob Marley", "Lively Up Yourself")
+        self.assertTrue(isinstance(result, str) and result != "")
+    def test_invalid_artist_input(self):
+        """Should return None if invalid input artist received"""
+        result = get_genius_lyrics({"a":"b"}, "Track")
+        self.assertTrue(result is None)
+    def test_invalid_track_input(self):
+        """Should return None if invalid input track received"""
+        result = get_genius_lyrics("Artist", 1235)
+        self.assertTrue(result is None)
+    def test_missing_track_input(self):
+        result = get_genius_lyrics("Bob Marley", "")
+        self.assertTrue(result is None)
+    def test_missing_artist_input(self):
+        result = get_genius_lyrics("", "Lively Up Yourself")
+        self.assertTrue(result is None)
 
 # # Unit test template
 # class name_test(unittest.TestCase):

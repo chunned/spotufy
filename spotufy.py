@@ -373,7 +373,12 @@ def get_genius_lyrics(artist_name, track_name):
     genius_token = secrets["GENIUS_TOKEN"]
     genius = lyricsgenius.Genius(genius_token)
     genius.response_format = 'html'
+
     try:
+        if not isinstance(artist_name, str):
+            raise TypeError("Invalid artist name type. Make sure artist name is a string.")
+        if not isinstance(track_name, str):
+            raise TypeError("Invalid track name type. Make sure track name is a string.")
         if not artist_name:
             raise ValueError("No artist name included in search")
         if track_name:
@@ -388,6 +393,12 @@ def get_genius_lyrics(artist_name, track_name):
         else:
             return None
     except ValueError as e:
+        print(f'ERROR: {e}')
+        return None
+    except AttributeError as e:
+        print(f'ERROR: Invalid input artist/track. {e}')
+        return None
+    except TypeError as e:
         print(f'ERROR: {e}')
         return None
 
