@@ -2,60 +2,42 @@ import unittest
 from spotufy import *
 import webbrowser
 import base64
+from app import app
+from selenium import webdriver
+import webbrowser
 
-# Due to how the authorization process is handled in Flask, the relevant function cannot be easily used in testing
-# Thus, we use an old version of the function from https://github.com/Ontario-Tech-NITS/final-project-group-1/pull/10/commits/ff6b4f74d3948b038104165dad07b55fe7f9af3b#diff-b10564ab7d2c520cdd0243874879fb0a782862c3c902ab535faabe57d5a505e1
-def request_api_token():
-    # Function to request an API token from Spotify - valid for 1hr
-    # Read the app's client ID and secret from .env file
-    try:
-        apiSecrets = dotenv.dotenv_values('.env')
-        if not apiSecrets:
-            raise ValueError
-    except ValueError:
-        print('Reading .env file failed - no data read.\n' +
-              'Ensure the .env file exists in the project root directory and contains the correct values\n' +
-              'CLIENT_ID=<client id>\n' +
-              'CLIENT_SECRET=<client secret>', end="")
-        return None
+def testing_request_api_token(flask_app):
+    # Authorization flow requires an HTTP callback
+    # This test-specific setup function handles this flow without running app.py
+    # This is a slightly modified version of spotufy.request_api_token() that doesn't use Flask
 
-    client_id = apiSecrets["CLIENT_ID"]
-    client_secret = apiSecrets["CLIENT_SECRET"]
-    try:
-        # Authorize with relevant scopes
-        # Authorization method adapted from https://python.plainenglish.io/bored-of-libraries-heres-how-to-connect-to-the-spotify-api-using-pure-python-bd31e9e3d88a
-        scope = 'playlist-modify-public playlist-modify-private user-top-read'
-        params = {
-            'response_type': 'code',
-            'client_id': client_id,
-            'scope': scope,
-            'redirect_uri': 'https://chunned.github.io/test/login-success'
-        }
-        webbrowser.open("https://accounts.spotify.com/authorize?" + urllib.parse.urlencode(params))
-        code = input("Enter the code from the end of the URL: ")
-    except ValueError:
-        print("Invalid authorization code length. Please try again and make sure you copy the full code.")
-        return None
+    app_client = flask_app.test_client()    # Create a Flask test client for the application
+    api_secrets = dotenv.dotenv_values('.env')  # Read .env secrets
+    client_id = api_secrets["CLIENT_ID"]
+    client_secret = api_secrets["CLIENT_SECRET"]
 
-    try:
-        apiUrl = "https://accounts.spotify.com/api/token"
-        encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
-        apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
-                      "Authorization": "Basic " + encodedCreds}
-        apiData = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": "https://chunned.github.io/test/login-success"
-        }
-        resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
-        # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
-        data = json.loads(resp.content.decode('utf-8'))
-        return data["access_token"]
-    except KeyError:
-        print('ERROR: No access token found in API response. Ensure your CLIENT_ID and CLIENT_SECRET are correct.')
-        return None
 
-token = request_api_token()
+    response = app_client.get('/login')
+    auth_url = response.headers[2][1]        # Extract redirect URL from HTTP response headers
+    # Open Spotify auth URL in web browser so user can authorize the app to act on their behalf
+    webbrowser.open(auth_url)
+    code = input("Enter the authorization code shown on the page: ")
+
+    apiUrl = "https://accounts.spotify.com/api/token"
+    encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+    apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+                  "Authorization": "Basic " + encodedCreds}
+    apiData = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": "https://chunned.github.io/test/index.html"
+    }
+    resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+    # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+    data = json.loads(resp.content.decode('utf-8'))
+    return data['access_token']
+
+token = testing_request_api_token(app)
 
 class make_api_call_test(unittest.TestCase):
     """Test module to test API call function in `spotufy.py`"""
@@ -122,7 +104,7 @@ class get_artist_releases_test(unittest.TestCase):
         self.assertTrue(None==get_artist_releases(token, "Al Green"))
     def test_valid_input(self):
         """Function should return an array of release items if given valid input and artist has releases"""
-        self.assertTrue(type(get_artist_releases(token, search_artists(token, "Al Green")))==type([]))
+        self.assertTrue(type(get_artist_releases(token, {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"}))==type([]))
 
 
 class get_top_tracks_test(unittest.TestCase):
@@ -209,12 +191,12 @@ class create_playlist_test(unittest.TestCase):
     """Test module to test create_playlist function in 'spotufy.py'"""
     def test_valid_return(self):
         """Should return playlist URL if playlist is created successfully"""
-        result = create_playlist(token, 'Test', [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
+        result = create_playlist(token, 'Test23', [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
         self.assertTrue(isinstance(result, str))
 
     def test_invalid_input_artist(self):
-        """Should return None given invalid input artist"""
-        result = create_playlist(token, [], [{"uri":"6rqhFgbbKwnb9MLmUQDhG6"}])
+        """Should return None given invalid input playlist name"""
+        result = create_playlist(token, [], [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
         self.assertTrue(result is None)
 
     def test_invalid_input_tracks(self):
@@ -223,4 +205,4 @@ class create_playlist_test(unittest.TestCase):
         self.assertTrue(result is None)
 
 if __name__ == '__main__':
-        unittest.main()
+    unittest.main()

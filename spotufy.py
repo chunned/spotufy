@@ -80,7 +80,6 @@ def create_playlist(api_token, playlist_name, track_list):
     url = f"{APIURL}/users/{user_id}/playlists"
     response = make_api_call(url, "POST", headers, payload)
     if not response:
-        print("ERROR: Response from API request is empty")
         return None
     playlist_id = response["id"]
     play_url = response["external_urls"]["spotify"]
@@ -91,7 +90,6 @@ def create_playlist(api_token, playlist_name, track_list):
     track_payload = json.dumps(track_data)
     response = make_api_call(url, "POST", headers, track_payload)
     if not response:
-        print("ERROR: Response from API request is empty")
         return None
     else:
         return play_url
@@ -144,7 +142,11 @@ def search_artists(api_token, input_artist):
 def get_top_tracks(apiToken,artist_name):
     # Get the most popular tracks for a given artist
     artists_got = search_artists(apiToken,artist_name)
-    artist_id = artists_got[1]["id"]
+    try:
+        artist_id = artists_got[1]["id"]
+    except TypeError:
+        print("ERROR: Artist was not found.")
+        return None
     headers = {"Authorization": f"Bearer {apiToken}"}
     # URL encode artist string to ensure request executes properly
     query = urllib.parse.quote(artist_id)
@@ -409,6 +411,9 @@ def get_artist_releases(api_token, artist):
         artist_id = artist['id']
     except KeyError:
         print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
+        return None
+    except TypeError:
+        print("ERROR: Input artist is not a valid artist dictionary.")
         return None
 
     headers = {"Authorization": f"Bearer {api_token}"}
