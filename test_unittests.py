@@ -28,7 +28,7 @@ def testing_request_api_token(flask_app):
     apiData = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": "https://chunned.github.io/test/index.html"
+        "redirect_uri": "https://ontario-tech-nits.github.io/final-project-group-1/index.html"
     }
     resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
     # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
