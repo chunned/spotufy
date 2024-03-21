@@ -1,9 +1,7 @@
 import unittest
 from spotufy import *
-import webbrowser
 import base64
 from app import app
-from selenium import webdriver
 import webbrowser
 
 def testing_request_api_token(flask_app):
