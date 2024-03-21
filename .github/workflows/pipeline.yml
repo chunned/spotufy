@@ -1,4 +1,5 @@
 name: Docker Image CI
+# NOTE: currently disabled; re-enable in Actions tab
 
 on:
   push: {}
