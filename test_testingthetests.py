@@ -25,15 +25,8 @@ class make_api_call_test(unittest.TestCase):
     @patch('spotufy.requests.request')
     def test_valid_return(self, mock_request):
         """Function should return a JSON object if given valid input"""
-
         # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"name": "Mock Track"}
-        mock_response.text = '{"name": "Mock Track"}'
-        mock_response.raise_for_status.return_value = None
-
-        mock_request.return_value = mock_response
-
+        mock_request.return_value = {"name": "Mock Track"}
         url = "https://api.spotify.com/v1/tracks/11dFghVXANMlKmJXsNCbNl"
         headers = {"Authorization": f"Bearer abcdefg"}
         response = spotufy.make_api_call(url, "GET", headers)
@@ -43,8 +36,6 @@ class make_api_call_test(unittest.TestCase):
     @patch('spotufy.requests.request', side_effect=requests.exceptions.HTTPError(401))
     def test_HTTP_error_return(self, mock_request):
         """Function should return None if an HTTP status code is raised"""
-
-
         # Invalid url, should raise a 401 error and return None
         url = "https://api."
 
@@ -58,10 +49,8 @@ class search_artists_test(unittest.TestCase):
     @patch('spotufy.make_api_call')
     def test_valid_return(self, mock_request):
         """Function should return a non-empty list if given good input"""
-
         # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
+        mock_request.return_value = {
             "artists": {
                 "total":5,
                 "items":[{
@@ -76,18 +65,13 @@ class search_artists_test(unittest.TestCase):
                     }]
             }
         }
-
-        mock_request.return_value = mock_response
-
         self.assertTrue([]!=spotufy.search_artists("token", "Al Green"))
-    @patch('spotufy.requests.request')
+
+    @patch('spotufy.make_api_call')
     def test_invalid_return(self, mock_request):
         """Function should return None if given bad input (no matching artist from search)"""
-
         # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"artists":{"total":0}}
-        mock_request.return_value = mock_response
+        mock_request.return_value = {"artists":{"total":0}}
 
         response = spotufy.search_artists("token", "sdfouhxiuheiuwer")
 
