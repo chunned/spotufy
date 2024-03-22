@@ -139,9 +139,9 @@ def search_artists(api_token, input_artist):
         artists.append(artist_result)
     return artists
 
-def get_top_tracks(apiToken,artist_name):
+def get_top_tracks(apiToken, artist_name):
     # Get the most popular tracks for a given artist
-    artists_got = search_artists(apiToken,artist_name)
+    artists_got = search_artists(apiToken, artist_name)
     try:
         artist_id = artists_got[1]["id"]
     except TypeError:
@@ -352,7 +352,6 @@ def get_related_artists(api_token, artist_id):
 
     try:
         response = make_api_call(url, "GET", headers)
-        # print(json.dumps(response, indent=2))
         if not response:
             print("ERROR: Response from API request is empty")
             return None
