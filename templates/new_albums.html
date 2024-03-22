@@ -7,10 +7,10 @@
         {% for albums in album %} 
         <div class="artist_output">
             <div class="text">
-                <p> New Release #{{ loop.index}}</p> 
                 <p> Name: {{ albums['name'] }}</p>
                 <p> Album Type : {{ albums['album_type']|title }}</p>
                 <p> Total Tracks : {{ albums['total_tracks'] }}</p>
+                <p> Release Date : {{ albums['release_date'] }}</p>
                 <p><a href="{{ albums['url'] }}"> Open in Browser  </a> </p>
                 <p><a href="{{ albums['uri'] }}"> Open in Spotify App </a> </p>
             </div>
