@@ -10,13 +10,14 @@ DONE:
 - search_song_details
 - get_artist_releases
 - get_top_tracks
+- get_related_artists
+- get_genius_lyrics
 
 TODO:
 - create_playlist
 - get_track_recs
 - get_user_recs
-- get_related_artists
-- get_genius_lyrics
+
 """
 
 
@@ -214,6 +215,78 @@ class get_top_tracks_test(unittest.TestCase):
 #         """Should return None given invalid input tracks"""
 #         result = spotufy.create_playlist("token", 'Bob Marley', '')
 #         self.assertTrue(result is None)
+
+@patch('spotufy.make_api_call')
+class get_related_artists_test(unittest.TestCase):
+    """Test module to test get related artists function in `spotufy.py"""
+
+    def test_valid_return(self, mock_request):
+        # Should return a list given valid input
+        mock_request.return_value = {"artists": [{"name": "Josh Lowe"}]}
+        with patch('spotufy.search_artists') as search_artists:
+            search_artists.return_value = "artist result"
+            response = spotufy.get_related_artists('token', 'artist')
+            self.assertTrue(type([]) == type(response))
+
+    def test_no_response(self, mock_request):
+        # Should return None if no response obtained
+        mock_request.return_value = None
+        response = spotufy.get_related_artists('token', 'artist')
+        self.assertTrue(None == response)
+
+    def test_no_artists_found(self, mock_request):
+        # Should return None if no matching artists found
+        mock_request.return_value = {"artists": []}
+        response = spotufy.get_related_artists('token', 'artist')
+        self.assertTrue(None == response)
+
+
+
+class get_genius_lyrics_test(unittest.TestCase):
+    """Test module to test get Genius lyrics function in `spotufy.py"""
+    @patch('spotufy.lyricsgenius.Genius.search_song')
+    def test_valid_return(self, mock_request):
+        # Should return a string given valid input
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            #mock_request.response_format = ""
+            mock_request.return_value.lyrics = "Lorem\nipsum\ndolor"
+
+            response = spotufy.get_genius_lyrics('Dion', 'Only You Know')
+
+            self.assertTrue(type("") == type(response))
+            self.assertTrue(response == "ipsum\ndolor")
+
+    def test_invalid_artist_type(self):
+        # Should return None if given invalid input artist type
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics(1, "Song")
+            self.assertTrue(None == response)
+
+    def test_missing_artist(self):
+        # Should return None if artist is missing
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+
+            response = spotufy.get_genius_lyrics('', 'Song')
+            self.assertTrue(None == response)
+
+    def test_missing_song(self):
+        # Should return None if song is missing
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+
+            response = spotufy.get_genius_lyrics('Josh Lowe', '')
+            self.assertTrue(None == response)
+
+    def test_invalid_song_type(self):
+        # Should return None if given invalid input song type
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics("Me", 1)
+            self.assertTrue(None == response)
+
 
 if __name__ == '__main__':
     unittest.main()
