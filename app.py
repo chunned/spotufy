@@ -191,7 +191,14 @@ def get_artist_release():
                                name=name, discography=get_discography)
 
 
-@app.route("/login", methods=["POST", "GET"])
+@app.route("/get_new_releases")
+def get_new_release():
+    new_releases = get_new_album_releases(session.get("access_token"))
+    print(new_releases)
+    return render_template("/new_albums.html", token=session.get("access_token"), album=new_releases)
+
+
+@app.route("/login", methods=["POST","GET"])
 def get_login_key():
     get_api_token = request_api_token()
     return get_api_token

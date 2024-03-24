@@ -422,6 +422,70 @@ class get_artist_releases_test(unittest.TestCase):
         response = spotufy.get_artist_releases("asdf", '')
         self.assertTrue(response is None)
 
+    def test_invalid_artist_input(self, placeholder):
+        """Function should return None when not given an artist ID item as returned by `search_artists()`"""
+        response = spotufy.get_artist_releases("token", "Al Green")
+        self.assertTrue(response is None)
+
+
+    def test_artist_no_releases(self, releases_response):
+        """Function should return None when an artist is returned that has no releases"""
+        releases_response.return_value = {"total":0}
+        response = spotufy.get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"})
+        self.assertTrue(response is None)
+
+    def test_valid_input(self, releases_response):
+        """Function should return an array of release items if given valid input and artist has releases"""
+        releases_response.return_value = {
+            "total":1,
+            "items": [{
+                "album_group":None,
+                "external_urls":{"spotify":None},
+                "id":None,
+                "artists":[None],
+                "name":None,
+                "release_date":None,
+                "total_tracks":None,
+                "images":[{"url":None}]
+            }]
+        }
+        response = spotufy.get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"})
+
+@patch('spotufy.make_api_call')
+class get_new_album_releases_test(unittest.TestCase):
+    """Test module to test get new releases function in `spotufy.py`"""
+    def test_valid_return(self, api_request):
+        # Should return a non-empty list given valid input
+        api_request.return_value = {"albums": {"items": [
+            {"uri":"asdf",
+             "external_urls": {"spotify": "https://"},
+             "album_type": "album",
+             "total_tracks": 5,
+             "name": "The Album",
+             "release_date": "2024/03/01",
+             "images": ["image.com"]
+             }]}}
+
+        response = spotufy.get_new_album_releases("token")
+        self.assertIsInstance(response, list)
+        self.assertTrue(len(response) > 0)
+
+    def test_missing_token(self, placeholder):
+        response = spotufy.get_artist_releases('', 'asdf')
+        self.assertTrue(response is None)
+
+    def test_missing_artist(self, placeholder):
+        response = spotufy.get_artist_releases("asdf", '')
+        # Should return None if token is missing
+        response = spotufy.get_new_album_releases("")
+        self.assertTrue(response is None)
+
+    def test_no_response(self, api_request):
+        # Should return None if no API response observed
+        api_request.return_value = None
+        response = spotufy.get_new_album_releases("asdf")
+        self.assertTrue(response is None)
+
 
 if __name__ == '__main__':
     unittest.main()

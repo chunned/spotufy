@@ -97,7 +97,6 @@ def create_playlist(api_token, playlist_name, track_list):
     url = f"{APIURL}/users/{user_id}/playlists"
     response = make_api_call(url, "POST", headers, payload)
     if not response:
-        print("ERROR: Response from API request is empty")
         return None
     playlist_id = response["id"]
     play_url = response["external_urls"]["spotify"]
@@ -108,7 +107,6 @@ def create_playlist(api_token, playlist_name, track_list):
     track_payload = json.dumps(track_data)
     response = make_api_call(url, "POST", headers, track_payload)
     if not response:
-        print("ERROR: Response from API request is empty")
         return None
     else:
         return play_url
@@ -515,3 +513,40 @@ def get_artist_releases(api_token, artist):
         finally:
             releases.append(releaseItem)
     return releases
+
+def get_new_album_releases(api_token):
+    if not api_token:
+        print("ERROR: No API token provided.")
+        return None
+    # Query new albums and return top 10 results
+  
+    headers = {"Authorization": f"Bearer {api_token}"}
+    url = f"{APIURL}/browse/new-releases?limit=10"
+
+    try:
+        response = make_api_call(url, "GET", headers=headers)
+        if not response:
+            print("ERROR: Response from API request is empty")
+            return None
+    except ValueError as e:
+        print(f"ERROR: Error in search results: {e}")
+        return None
+    
+    new_albums = []
+    for albums in response['albums']['items']:
+        album_items = {
+            "uri" : albums["uri"],
+            "url" : albums["external_urls"]["spotify"],
+            "album_type" : albums["album_type"],
+            "total_tracks" : albums["total_tracks"],
+            "name" : albums["name"],
+            "release_date": albums["release_date"],
+            "imageUrl" : albums["images"][0]
+        }
+        try:
+            albums["imageUrl"] = albums["images"][1]
+        except IndexError:
+            albums["imageUrl"] = "Image not found"
+        finally:
+            new_albums.append(album_items)
+    return new_albums

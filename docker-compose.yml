@@ -1,13 +1,23 @@
 ---
-version: '3.9'
+# If you're Josh, use the compose file we submitted to Canvas with environment variables pre-set
 services:
   spotufy:
-    image: chunned/spotufy:latest
-    environment:
-      - CLIENT_ID=<client id>
-      - CLIENT_SECRET=<client secret>
-      - GENIUS_TOKEN=<genius token>
-      - SECRET_KEY=<secret key>
-      - CALLBACK_URL=<callback url>
+    container_name: spotufy
+    image: ghcr.io/chunned/spotufy:latest
     ports:
-      - '9191:9191'
+      - 8080:8080
+    environment:
+      - CLIENT_ID=
+      - CLIENT_SECRET=
+      - GENIUS_TOKEN=
+      - SECRET_KEY=
+      - CALLBACK_URL=https://spotufy.chunned.ca/callback
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+    depends_on:
+      - spotufy
