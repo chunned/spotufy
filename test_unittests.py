@@ -1,5 +1,7 @@
 import unittest
 import requests
+import werkzeug.wrappers.response
+
 import spotufy
 from unittest.mock import patch
 
@@ -28,14 +30,18 @@ class make_api_call_test(unittest.TestCase):
 
         headers = {"Authorization": f"Bearer wefoijweoijsxoijwed"}
         response = spotufy.make_api_call(url, "GET", headers)
-        self.assertTrue(None==response)
+        self.assertTrue(None == response)
 
 
 class request_api_token_test(unittest.TestCase):
     """Test module to test request API token function in `spotufy.py`"""
-    def test_token_received(self):
-        """API token string should be returned and not be None"""
-        self.assertTrue(None!=spotufy.request_api_token())
+    @patch('spotufy.dotenv.dotenv_values')
+    def test_token_received(self, secrets):
+        secrets.return_value = {"CLIENT_ID": "1", "CALLBACK_URL": "http://"}
+        """Redirect object to authentication URL should be returned"""
+        response = spotufy.request_api_token()
+        self.assertTrue(type(response) == werkzeug.wrappers.response.Response)
+        self.assertTrue(response.status_code == 302)
 
 
 class parse_input_test(unittest.TestCase):
