@@ -3,7 +3,7 @@ SpOTUfy is an application for the purpose of providing greater value to the ever
 
 ![](static/homepage.gif)
 
-# Deployment
+# Local Deployment
 There are two options for deployment:
 - Clone this branch (main), place the `.env` file we submitted to Canvas in the repository directory, install the required packages with Pip, then simply `python3 app.py`
 - Alternatively, use the `docker-compose.yml` we submitted to Canvas. `docker compose up`
