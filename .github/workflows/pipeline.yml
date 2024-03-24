@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'main'
+          ref: 'docker'
       - name: Login
         run: echo ${{ secrets.PAT }} | docker login ghcr.io -u chunned --password-stdin
 
