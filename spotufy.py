@@ -68,6 +68,22 @@ def parse_input(string):
     return re.sub('[^0-9a-zA-Z ]', '', string)
 
 def create_playlist(api_token, playlist_name, track_list):
+    if not api_token:
+        print("ERROR: No API token provided")
+        return None
+    if not playlist_name:
+        print("ERROR: No playlist name provided")
+        return None
+    if not track_list:
+        print("ERROR: No track list provided")
+        return None
+    if not isinstance(playlist_name, str):
+        print("ERROR: Playlist name is not a string")
+        return None
+    if not isinstance(track_list, list):
+        print("ERROR: Track list is not a list")
+        return None
+
     headers = {"Authorization": f"Bearer {api_token}", "Content-Type":"application/json"}
     url = "https://api.spotify.com/v1/me"
     user_id = make_api_call(url, "GET", headers=headers)["id"]
@@ -101,6 +117,12 @@ def create_playlist(api_token, playlist_name, track_list):
 ################ Feature Functions ################
 
 def search_artists(api_token, input_artist):
+    if not input_artist:
+        print("ERROR: No input artist provided")
+        return None
+    if not isinstance(input_artist, str):
+        print("ERROR: Invalid input artist type (provided value was not a string)")
+        return None
     # Searches artist by name and returns a list of matches
     headers = {"Authorization": f"Bearer {api_token}"}
     # URL encode artist string to ensure request executes properly
@@ -142,11 +164,21 @@ def search_artists(api_token, input_artist):
         artists.append(artist_result)
     return artists
 
-def get_top_tracks(apiToken,artist_name):
+def get_top_tracks(api_token, artist_name):
+    if not artist_name:
+        print("ERROR: No artist name provided")
+        return None
+    if not isinstance(artist_name, str):
+        print("ERROR: Invalid artist name provided (value provided was not a string)")
+        return None
     # Get the most popular tracks for a given artist
-    artists_got = search_artists(apiToken,artist_name)
-    artist_id = artists_got[1]["id"]
-    headers = {"Authorization": f"Bearer {apiToken}"}
+    artists_got = search_artists(api_token, artist_name)
+    try:
+        artist_id = artists_got[1]["id"]
+    except TypeError:
+        print("ERROR: Artist was not found.")
+        return None
+    headers = {"Authorization": f"Bearer {api_token}"}
     # URL encode artist string to ensure request executes properly
     query = urllib.parse.quote(artist_id)
     # Construct the query URL
@@ -182,11 +214,20 @@ def get_top_tracks(apiToken,artist_name):
 
 def search_song_details(api_token, track, artist):
     # Return information about a given track
-    if track == "":
+    if not api_token:
+        print("ERROR: No API token provided")
+        return None
+    if not track:
         print("ERROR: Track input is empty")
         return None
-    if artist == "":
+    if not artist:
         print("ERROR: Artist input is empty")
+        return None
+    if not isinstance(track, str):
+        print("ERROR: Wrong input track type (provided value was not a string)")
+        return None
+    if not isinstance(artist, str):
+        print("ERROR: Wrong input artist type (provided value was not a string)")
         return None
 
     track = parse_input(track)
@@ -223,15 +264,28 @@ def search_song_details(api_token, track, artist):
         track_results['image'] = "Image not found"
     return track_results
 
-def get_track_recs(apiToken, track, artist):
+def get_track_recs(api_token, track, artist):
     # Get a list of recommended tracks based on a single input track
     # URL encode track and artist strings to ensure request executes properly
-    track_query = urllib.parse.quote(track)
-    artist_query = urllib.parse.quote(artist)
-    headers = {"Authorization": f"Bearer {apiToken}"}
-    # Construct the query URL to search for specified track by specified artist
-    url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
+    headers = {"Authorization": f"Bearer {api_token}"}
+
     try:
+        # Make sure token, artist and track were given
+        if not api_token:
+            raise ValueError("No API token provided")
+        if not track:
+            raise ValueError("Input track is empty")
+        if not artist:
+            raise ValueError("Input artist is empty")
+        if not isinstance(track, str):
+            raise ValueError("Input track was not a string")
+        if not isinstance(artist, str):
+            raise ValueError("Input artist was not a string")
+
+        track_query = urllib.parse.quote(track)
+        artist_query = urllib.parse.quote(artist)
+        # Construct the query URL to search for specified track by specified artist
+        url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
         response = make_api_call(url, "GET", headers=headers)
         if not response:
             print("ERROR: Response from API request is empty")
@@ -282,6 +336,9 @@ def get_track_recs(apiToken, track, artist):
     return recs
 
 def get_user_recs(api_token):
+    if not api_token:
+        print("ERROR: No API token provided")
+        return None
     # Get recommendations based on user's top tracks
     # URL encode username strings to ensure request executes properly
     headers = {"Authorization": f"Bearer {api_token}"}
@@ -345,13 +402,18 @@ def get_related_artists(api_token, artist_id):
     # Search for artists related to a given input artist and return matching results
     # artistID can be obtained from the dictionary returned by search_artists()
 
+    if not api_token:
+        print("ERROR: No API token provided")
+        return None
+    if not artist_id:
+        print("ERROR: No artist ID provided")
+
     headers = {"Authorization": f"Bearer {api_token}"}
     # Construct the query URL
     url = f"{APIURL}/artists/{artist_id}/related-artists"
 
     try:
         response = make_api_call(url, "GET", headers)
-        # print(json.dumps(response, indent=2))
         if not response:
             print("ERROR: Response from API request is empty")
             return None
@@ -406,9 +468,18 @@ def get_artist_releases(api_token, artist):
     # Query all artist releases
     # artist should be an artist dictionary returned from searchArtists()
     try:
+        if not artist:
+            raise ValueError("ERROR: No artist dictionary provided")
+        if not api_token:
+            raise ValueError("ERROR: No API token provided")
         artist_id = artist['id']
     except KeyError:
         print("ERROR: No artist ID found. Ensure you are passing a valid artist dictionary object from searchArtist()")
+        return None
+    except TypeError:
+        print("ERROR: Input artist is not a valid artist dictionary.")
+        return None
+    except ValueError:
         return None
 
     headers = {"Authorization": f"Bearer {api_token}"}
