@@ -1,4 +1,9 @@
-import requests, dotenv, urllib.parse, re, json, lyricsgenius
+import requests
+import dotenv
+import urllib.parse
+import re
+import json
+import lyricsgenius
 from flask import redirect
 
 # Base API URL used for all API requests

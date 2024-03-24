@@ -1,4 +1,7 @@
-import unittest, requests, spotufy, json
+import unittest
+import requests
+import spotufy
+import json
 from unittest.mock import patch
 
 # def testing_request_api_token(flask_app):

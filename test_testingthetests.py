@@ -1,4 +1,7 @@
-import unittest, requests, spotufy, json
+import unittest
+import requests
+import spotufy
+import json
 from unittest.mock import patch
 
 """
