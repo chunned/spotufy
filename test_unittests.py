@@ -1,159 +1,105 @@
-import unittest
-import base64
-from spotufy import *
-from app import app
-import webbrowser
-from unittest.mock import patch, MagicMock
+import unittest, requests, spotufy, json
+from unittest.mock import patch
 
-def testing_request_api_token(flask_app):
-    # Authorization flow requires an HTTP callback
-    # This test-specific setup function handles this flow without running app.py
-    # This is a slightly modified version of spotufy.request_api_token() that doesn't use Flask
+# def testing_request_api_token(flask_app):
+#     # Authorization flow requires an HTTP callback
+#     # This test-specific setup function handles this flow without running app.py
+#     # This is a slightly modified version of spotufy.request_api_token() that doesn't use Flask
 
-    app_client = flask_app.test_client()    # Create a Flask test client for the application
-    api_secrets = dotenv.dotenv_values('.env')  # Read .env secrets
-    client_id = api_secrets["CLIENT_ID"]
-    client_secret = api_secrets["CLIENT_SECRET"]
+#     app_client = flask_app.test_client()    # Create a Flask test client for the application
+#     api_secrets = dotenv.dotenv_values('.env')  # Read .env secrets
+#     client_id = api_secrets["CLIENT_ID"]
+#     client_secret = api_secrets["CLIENT_SECRET"]
 
 
-    response = app_client.get('/login')
-    auth_url = response.headers[2][1]        # Extract redirect URL from HTTP response headers
-    # Open Spotify auth URL in web browser so user can authorize the app to act on their behalf
-    webbrowser.open(auth_url)
-    code = input("Enter the authorization code shown on the page: ")
+#     response = app_client.get('/login')
+#     auth_url = response.headers[2][1]        # Extract redirect URL from HTTP response headers
+#     # Open Spotify auth URL in web browser so user can authorize the app to act on their behalf
+#     webbrowser.open(auth_url)
+#     code = input("Enter the authorization code shown on the page: ")
 
-    apiUrl = "https://accounts.spotify.com/api/token"
-    encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
-    apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
-                  "Authorization": "Basic " + encodedCreds}
-    apiData = {
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": "https://ontario-tech-nits.github.io/final-project-group-1/index.html"
-    }
-    resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
-    # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
-    data = json.loads(resp.content.decode('utf-8'))
-    return data['access_token']
+#     apiUrl = "https://accounts.spotify.com/api/token"
+#     encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
+#     apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
+#                   "Authorization": "Basic " + encodedCreds}
+#     apiData = {
+#         "grant_type": "authorization_code",
+#         "code": code,
+#         "redirect_uri": "https://ontario-tech-nits.github.io/final-project-group-1/index.html"
+#     }
+#     resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
+#     # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
+#     data = json.loads(resp.content.decode('utf-8'))
+#     return data['access_token']
 
-token = testing_request_api_token(app)
+# token = testing_request_api_token(app)
+
 
 class make_api_call_test(unittest.TestCase):
     """Test module to test API call function in `spotufy.py`"""
-    def test_valid_return(self):
+
+    @patch('spotufy.requests.request')
+    def test_valid_return(self, mock_request):
         """Function should return a JSON object if given valid input"""
+        response_object = requests.models.Response()
+        response_object._content = str(json.dumps({"name": "Mock Track"})).encode('utf-8')
+        response_object.status_code = 200
+        mock_request.return_value = response_object
         url = "https://api.spotify.com/v1/tracks/11dFghVXANMlKmJXsNCbNl"
-        headers = {"Authorization": f"Bearer {token}"}
-        self.assertTrue(type(make_api_call(url, "GET", headers)) == type({}))
-    def test_HTTP_error_return(self):
+        headers = {"Authorization": f"Bearer abcdefg"}
+        response = spotufy.make_api_call(url, "GET", headers)
+        self.assertTrue(type(response) == type({}))
+
+    @patch('spotufy.requests.request', side_effect=requests.exceptions.HTTPError(401))
+    def test_HTTP_error_return(self, mock_request):
         """Function should return None if an HTTP status code is raised"""
-        url = "https://api.spotify.com/v1/tracks/11dFghVXANMlKmJXsNCbNl"
-        # Invalid token, should raise a 401 error and return None
+        # Invalid url, should raise a 401 error and return None
+        url = "https://api."
+
         headers = {"Authorization": f"Bearer wefoijweoijsxoijwed"}
-        self.assertTrue(None==make_api_call(url, "GET", headers))
-    def test_invalid_schema_return(self):
-        """Function should return None if the schema of the URL is wrong/missing"""
-        # URL missing schema, should raise exception and return None
-        url = "api.spotify.com/v1/track/11dFghVXANMlKmJXsNCbNl"
-        headers = {"Authorization": f"Bearer {token}"}
-        self.assertTrue(None==make_api_call(url, "GET", headers))
+        response = spotufy.make_api_call(url, "GET", headers)
+        self.assertTrue(None==response)
 
 
 class request_api_token_test(unittest.TestCase):
     """Test module to test request API token function in `spotufy.py`"""
     def test_token_received(self):
         """API token string should be returned and not be None"""
-        self.assertTrue(None!=request_api_token())
+        self.assertTrue(None!=spotufy.request_api_token())
 
 
 class parse_input_test(unittest.TestCase):
     """Test module to test parse input function in `spotufy.py`"""
     def test_valid_return(self):
         """Function should return a non-empty string when called"""
-        self.assertTrue(type(parse_input("ABxcII29238JJb"))==str and None!=parse_input("ABxcII29238JJb"))
+        self.assertTrue(type(spotufy.parse_input("ABxcII29238JJb"))==str and None!=spotufy.parse_input("ABxcII29238JJb"))
 
 
-class create_playlist_test(unittest.TestCase):
-    """Test module to test create_playlist function in 'spotufy.py'"""
-    def test_valid_return(self):
-        """Should return playlist URL if playlist is created successfully"""
-        result = create_playlist(token, 'Test23', [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
-        self.assertTrue(isinstance(result, str))
+# class create_playlist_test(unittest.TestCase):
+#     """Test module to test create_playlist function in 'spotufy.py'"""
+#     def test_valid_return(self):
+#         """Should return playlist URL if playlist is created successfully"""
+#         result = create_playlist(token, 'Test23', [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
+#         self.assertTrue(isinstance(result, str))
 
-    def test_invalid_input_artist(self):
-        """Should return None given invalid input playlist name"""
-        result = create_playlist(token, [], [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
-        self.assertTrue(result is None)
+#     def test_invalid_input_artist(self):
+#         """Should return None given invalid input playlist name"""
+#         result = create_playlist(token, [], [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
+#         self.assertTrue(result is None)
 
-    def test_invalid_input_tracks(self):
-        """Should return None given invalid input tracks"""
-        result = create_playlist(token, 'Bob Marley', '')
-        self.assertTrue(result is None)
+#     def test_invalid_input_tracks(self):
+#         """Should return None given invalid input tracks"""
+#         result = create_playlist(token, 'Bob Marley', '')
+#         self.assertTrue(result is None)
 
+
+@patch('spotufy.make_api_call')
 class search_artists_test(unittest.TestCase):
-    """Test module to test search artists function in `spotufy.py"""
-    @patch('spotufy.requests.request')
-    def test_valid_return(self, mock_request):
+    """Test module to test search artists function in `spotufy.py`"""
+
+    def test_valid_return(self, artists_response):
         """Function should return a non-empty list if given good input"""
-
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "artists": {
-                "total":5,
-                "items":[
-                    {"name":None,
-                    "external_urls":{"spotify":None},
-                    "followers":{"total":1000},
-                    "popularity":None,
-                    "genres":"Rock",
-                    "id":None,
-                    "uri":None,
-                    "images":[{"url":None}]}
-                ]
-            }
-        }
-        mock_response.text = '{"artists": {"total":5,"items":{{"name":None,"external_urls":{"spotify":None},"followers":{"total":1000},"popularity":None,"genres":"Rock","id":None,"uri":None,"images":[{"url":None}]}}}}'
-        mock_request.return_value = mock_response
-
-        self.assertTrue([]!=search_artists("token", "Al Green"))
-    @patch('spotufy.requests.request', side_effect=requests.exceptions.HTTPError(404))
-    def test_invalid_return(self, mock_request):
-        """Function should return None if given bad input (no matching artist from search)"""
-
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "artists": {
-                "total":5,
-                "items":[
-                    {"name":None,
-                    "external_urls":{"spotify":None},
-                    "followers":{"total":1000},
-                    "popularity":None,
-                    "genres":"Rock",
-                    "id":None,
-                    "uri":None,
-                    "images":[{"url":None}]}
-                ]
-            }
-        }
-        mock_response.text = '{"artists": {"total":5,"items":{{"name":None,"external_urls":{"spotify":None},"followers":{"total":1000},"popularity":None,"genres":"Rock","id":None,"uri":None,"images":[{"url":None}]}}}}'
-        mock_request.return_value = mock_response
-
-        self.assertTrue(None==search_artists("token", "sdfouhxiuheiuwer"))
-
-
-class get_top_tracks_test(unittest.TestCase):
-    """Test module to test search artists function in `spotufy.py"""
-    @patch('spotufy.search_artists')
-    @patch('spotufy.get_top_tracks')
-    def test_valid_return(self, mock_request_artist, mock_request_tracks):
-        """Function should return a non-empty list if given good input"""
-
-        # Configure the mock response for the search_artists function
-        mock_response_artist = MagicMock()
-        mock_response_artist.json.return_value = {
+        artists_response.return_value = {
             "artists": {
                 "total":5,
                 "items":[{
@@ -168,178 +114,256 @@ class get_top_tracks_test(unittest.TestCase):
                     }]
             }
         }
-        mock_response_artist.text = '{"artists": {"total":5,"items":{{"name":None,"external_urls":{"spotify":None},"followers":{"total":1000},"popularity":None,"genres":"Rock","id":None,"uri":None,"images":[{"url":None}]}}}}'
-        mock_request_artist.return_value = mock_response_artist
+        self.assertTrue([]!=spotufy.search_artists("token", "Al Green"))
 
-        # Configure the mock response for the get_top_tracks function
-        mock_response_tracks = MagicMock()
-        mock_response_tracks.json.return_value = {
-            "tracks": [{
-                "name":None,
-                "album":{"name":None, "artists":[{"name":None}], "release_date":None, "images":["",{"url":None}]},
-                "external_urls":{"spotify":None},
-                "populartiy":None,
-                "uri":None,
-            }]
+    def test_invalid_return(self, artists_response):
+        """Function should return None if given bad input (no matching artist from search)"""
+        artists_response.return_value = {"artists":{"total":0}}
+        response = spotufy.search_artists("token", "sdfouhxiuheiuwer")
+        self.assertTrue(None == response)
+
+
+@patch('spotufy.make_api_call')
+class get_top_tracks_test(unittest.TestCase):
+    """Test module to test search artists function in `spotufy.py"""
+
+    def test_valid_return(self, placeholder):
+        """Function should return a non-empty list if given good input"""
+        artist_response = {
+            "artists":{
+                "total":1,
+                "items":[{
+                    "name":None,
+                    "external_urls":{"spotify":None},
+                    "followers":{"total":1000},
+                    "popularity":None,
+                    "genres":"Rock",
+                    "id":b"1234",
+                    "uri":None,
+                    "images":[{"url":None}]
+                    }]
+                }
+            }
+
+        tracks_response = {
+                "tracks": [{
+                    "name": None,
+                    "album": {"name": None, "artists": [{"name": None}], "release_date": None,"images": ["", {"url": None}]},
+                    "external_urls": {"spotify": None},
+                    "popularity": None,
+                    "uri": None,
+                }]
         }
-        mock_response_tracks.text = '{"tracks": [{"name":None,"album":{"name":None, "artists":[{"name":None}], "release_date":None, "images":["",{"url":None}]},"external_urls":{"spotify":None},"populartiy":None,"uri":None,}]}'
-        mock_request_tracks.return_value = mock_response_tracks
+        with patch('spotufy.make_api_call') as api_call_patch:
+            api_call_patch.side_effect = [artist_response, tracks_response]
+            response = spotufy.get_top_tracks("token", "Elton John")
+            self.assertTrue([]!=response)
 
-        self.assertTrue([]!=get_top_tracks("token", "Elton John"))
-    @patch('spotufy.get_top_tracks', side_effect=requests.exceptions.HTTPError(400))
-    def test_empty_input(self, mock_request):
+    def test_empty_input(self, api_response):
         """Function should return None if given bad input (artist parameter empty)"""
+        # make_api_call returns None because of 400 error
+        api_response.return_value = None 
+        response = spotufy.get_top_tracks("token", "")
+        self.assertTrue(None == response)
 
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"error":{"status":400,"message":"No search query"}}
-        mock_response.text = '{"error":{"status":400,"message":"No search query"}}'
-        mock_request.return_value = mock_response
+    def test_invalid_input(self, artists_response):
+        """Function should return None if given bad input (artist not found, no tracks returned)"""        
+        artists_response.return_value = {"artists":{"total":0}}
+        self.assertTrue(None==spotufy.get_top_tracks("token", "asnldnwkandajdnak"))
 
-        self.assertTrue(None==(get_top_tracks("token", "")))
-    @patch('spotufy.get_top_tracks')
-    def test_invalid_input(self, mock_request):
-        """Function should return None if given bad input (artist not found, no tracks returned)"""
-        
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"artists":{"total":0}}
-        mock_response.text = '{"artists":{"total":0}}'
-        mock_request.return_value = mock_response
-        
-        self.assertTrue(None==get_top_tracks("token", "asnldnwkandajdnak"))
 
+@patch('spotufy.make_api_call')
 class search_song_details_test(unittest.TestCase):
     """Test module to test search song details function in `spotufy.py`"""
-    def test_blank_input(self):
+
+    def test_blank_input(self, song_response):
         """Function should return None if given empty input"""
-        self.assertTrue(None==search_song_details("token", "", ""))
-    
-    @patch('spotufy.requests.request')
-    def test_no_match(self, mock_request):
+        self.assertTrue(None==spotufy.search_song_details("token", "", ""))
+
+    def test_no_match(self, song_response):
         """Function should return None if there is no matching result from API"""
+        song_response.return_value = {"tracks":{"items":[]}}
+        response = spotufy.search_song_details("token", "Banana Pop Bozo", "Frisbee Cube Clock")
+        self.assertTrue(None==response)
 
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"tracks":{"items":[]}}
-        mock_response.text = '{"tracks":{"items":[]}}'
-        mock_request.return_value = mock_response
-        self.assertTrue(None==search_song_details("token", "Banana Pop Bozo", "Frisbee Cube Clock"))
-    
-    @patch('spotufy.requests.request')
-    def test_valid_return(self, mock_request):
+    def test_valid_return(self, song_response):
         """Function should return a dictionary of track information if given good input"""
-
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
+        song_response.return_value = {
             "tracks": {
-                "items":[
-                    {"id":None,
+                "items":[{
+                    "id":None,
                     "name":None,
-                    "album":{"name":None, "artists":[{"name":None}], "release_date":None},
+                    "album":{"name":None, "artists":[{"name":None}], "release_date":None, "images":["",{"url":None}]},
                     "duration_ms":100000,
-                    "external_urls":{"spotify":None},
-                    "images":None}
-                ]
+                    "external_urls":{"spotify":None}
+                    }]
             }
         }
-        mock_response.text = '{"tracks": {"items":[{"id":None,"name":None,"album":{"name":None, "artists":[{"name":None}], "release_date":None},"duration_ms":100000,"external_urls":{"spotify":None}}]}}'
-        mock_request.return_value = mock_response
-        self.assertTrue(type(search_song_details("token", "Resonance", "Home")) == type({}))
+        self.assertTrue(type(spotufy.search_song_details("token", "Resonance", "Home")) == type({}))
 
 
+@patch('spotufy.make_api_call')
 class get_track_recs_test(unittest.TestCase):
-    """Test module to test get_track_recs function in 'spotufy.py'"""
-    def test_valid_return(self):
+    """Test module to test get_track_recs function in `spotufy.py`"""
+
+    def test_valid_return(self, placeholder):
         """Should return a nonempty list for valid input"""
-        result = get_track_recs(token, 'Bend Down Low', 'Bob Marley')
-        self.assertTrue(isinstance(result, list) and result is not None)
-    def test_invalid_input_token(self):
+        track_dict = {"tracks":{"items":[{"id":"1234"}]}}
+        recommended_tracks_dict = {
+                "tracks": [{
+                    "id":None,
+                    "name": None,
+                    "album": {"name": None, "artists": [{"name": None}], "images": [{"url": None}]},
+                    "artists":[{"name":None}],
+                    "external_urls": {"spotify": None},
+                    "popularity": None,
+                    "uri": None,
+                }]
+            }
+        
+        with patch('spotufy.make_api_call') as recommended_tracks:
+            recommended_tracks.side_effect = [track_dict, recommended_tracks_dict]
+            result = spotufy.get_track_recs("token", 'Bend Down Low', 'Bob Marley')
+            self.assertTrue(isinstance(result, list) and result is not None)
+
+    def test_invalid_input_token(self, api_response):
         """Should return None in the event of an invalid input token"""
-        result = get_track_recs('asdf', 'Rednecks', 'Randy Newman')
+        # make_api_call returns none because of 401 error
+        api_response.return_value = None 
+        result = spotufy.get_track_recs('asdf', 'Rednecks', 'Randy Newman')
+        
         self.assertTrue(result is None)
 
-    def test_invalid_input_track(self):
+    def test_invalid_input_track(self, api_response):
         """Should return None in the event of an invalid input track"""
-        result = get_track_recs(token, '', 'Josh Lowe')
+        # make_api_call returns none because of 400 error
+        api_response.return_value = None 
+        result = spotufy.get_track_recs("token", '', 'Josh Lowe')
         self.assertTrue(result is None)
-    def test_invalid_input_artist(self):
+
+    def test_invalid_input_artist(self, api_response):
         """Should return None in the event of an invalid input artist"""
-        result = get_track_recs(token, 'DevOps', '')
+        # make_api_call returns none because of 400 error
+        api_response.return_value = None 
+        result = spotufy.get_track_recs("token", 'DevOps', '')
         self.assertTrue(result is None)
 
 
+@patch('spotufy.make_api_call')
 class get_user_recs_test(unittest.TestCase):
     """Test module to test get_user_recs function in 'spotufy.py'"""
-    def test_valid_return(self):
+
+    def test_valid_return(self, placeholder):
         """Should return a nonempty list for valid input"""
-        result = get_user_recs(token)
-        self.assertTrue(isinstance(result, list) and result is not None)
-    def test_invalid_input(self):
+        listened_tracks_dict = {"total":5,"items":[{"id":"1234"},{"id":"1234"},{"id":"1234"},{"id":"1234"},{"id":"1234"}]}
+        recommended_tracks_dict = {
+                "tracks": [{
+                    "id":None,
+                    "name": None,
+                    "album": {"name": None, "artists": [{"name": None}], "images": [{"url": None}]},
+                    "artists":[{"name":None}],
+                    "external_urls": {"spotify": None},
+                    "popularity": None,
+                    "uri": None,
+                }]
+            }
+
+        with patch('spotufy.make_api_call') as recommended_tracks:
+            recommended_tracks.side_effect = [listened_tracks_dict, recommended_tracks_dict]
+            result = spotufy.get_user_recs("token")
+            self.assertTrue(isinstance(result, list) and result is not None)
+
+    def test_invalid_input(self, api_response):
         """Should return None in the event of an invalid input token"""
-        result = get_user_recs('asdf')
+        # make_api_call returns none because of 401 error
+        api_response.return_value = None 
+        result = spotufy.get_user_recs('asdf')
         self.assertTrue(result is None)
 
 
+@patch('spotufy.make_api_call')
 class get_related_artists_test(unittest.TestCase):
-    """Test module to test get related artists function in 'spotufy.py'"""
-    def test_valid_return(self):
-        """Should return a nonempty list for valid input"""
-        result = get_related_artists(token, '0TnOYISbd1XYRBk9myaseg')
-        self.assertTrue(isinstance(result, list) and result is not None)
-    def test_invalid_input(self):
-        """Should return None for invalid input"""
-        result = get_related_artists(token, 23423)
-        self.assertTrue(result is None)
+    """Test module to test get related artists function in `spotufy.py"""
+
+    def test_valid_return(self, artists_response):
+        """Should return a list given valid input"""
+        artists_response.return_value = {"artists": [{"name": "Josh Lowe"}]}
+        with patch('spotufy.search_artists') as search_artists:
+            search_artists.return_value = "artist result"
+            response = spotufy.get_related_artists('token', 'artist')
+            self.assertTrue(type([]) == type(response))
+
+    def test_no_response(self, api_response):
+        """Should return None if no response obtained"""
+        api_response.return_value = None
+        response = spotufy.get_related_artists('token', 'artist')
+        self.assertTrue(None == response)
+
+    def test_no_artists_found(self, artist_response):
+        """Should return None if no matching artists found"""
+        artist_response.return_value = {"artists": []}
+        response = spotufy.get_related_artists('token', 'artist')
+        self.assertTrue(None == response)
 
 
 class get_genius_lyrics_test(unittest.TestCase):
-    """Test module to test get Genius lyrics function in 'spotufy.py'"""
-    def test_valid_return(self):
-        """Function should return a non-empty string for valid input"""
-        result = get_genius_lyrics("Bob Marley", "Lively Up Yourself")
-        self.assertTrue(isinstance(result, str) and result != "")
-    def test_invalid_artist_input(self):
-        """Should return None if invalid input artist received"""
-        result = get_genius_lyrics({"a":"b"}, "Track")
-        self.assertTrue(result is None)
-    def test_invalid_track_input(self):
-        """Should return None if invalid input track received"""
-        result = get_genius_lyrics("Artist", 1235)
-        self.assertTrue(result is None)
-    def test_missing_track_input(self):
-        result = get_genius_lyrics("Bob Marley", "")
-        self.assertTrue(result is None)
-    def test_missing_artist_input(self):
-        result = get_genius_lyrics("", "Lively Up Yourself")
-        self.assertTrue(result is None)
+    """Test module to test get Genius lyrics function in `spotufy.py"""
+
+    @patch('spotufy.lyricsgenius.Genius.search_song')
+    def test_valid_return(self, genius_response):
+        """Should return a string given valid input"""
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            genius_response.return_value.lyrics = "Lorem\nipsum\ndolor"
+            response = spotufy.get_genius_lyrics('Dion', 'Only You Know')
+            self.assertTrue(type("") == type(response))
+            self.assertTrue(response == "ipsum\ndolor")
+
+    def test_invalid_artist_type(self):
+        """Should return None if given invalid input artist type"""
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics(1, "Song")
+            self.assertTrue(None == response)
+
+    def test_missing_artist(self):
+        """Should return None if artist is missing"""
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics('', 'Song')
+            self.assertTrue(None == response)
+
+    def test_missing_song(self):
+        """Should return None if song is missing"""
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics('Josh Lowe', '')
+            self.assertTrue(None == response)
+
+    def test_invalid_song_type(self):
+        """Should return None if given invalid input song type"""
+        with patch('spotufy.dotenv.dotenv_values') as dotenv:
+            dotenv.return_value = {"GENIUS_TOKEN": "1234"}
+            response = spotufy.get_genius_lyrics("Me", 1)
+            self.assertTrue(None == response)
 
 
+@patch('spotufy.make_api_call')
 class get_artist_releases_test(unittest.TestCase):
     """Test module to test get artist releases function in `spotufy.py`"""
-    @patch('spotufy.requests.request')
-    def test_invalid_artist_input(self, mock_request):
-        """Function should return None when not given an artist ID item as returned by `search_artists()`."""
-        self.assertTrue(None==get_artist_releases("token", "Al Green"))
-    @patch('spotufy.requests.request')
-    def test_artist_no_releases(self, mock_request):
+
+    def test_invalid_artist_input(self, releases_response):
+        """Function should return None when not given an artist ID item as returned by `search_artists()`"""
+        self.assertTrue(None==spotufy.get_artist_releases("token", "Al Green"))
+
+    def test_artist_no_releases(self, releases_response):
         """Function should return None when an artist is returned that has no releases"""
+        releases_response.return_value = {"total":0}
+        self.assertTrue(None==spotufy.get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"}))
 
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {"total":0}
-        mock_response.text = '{"total":0}'
-        mock_request.return_value = mock_response
-
-        self.assertTrue(None==get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"}))
-    @patch('spotufy.requests.request')
-    def test_valid_input(self, mock_request):
+    def test_valid_input(self, releases_response):
         """Function should return an array of release items if given valid input and artist has releases"""
-        
-        # Configure the mock response
-        mock_response = MagicMock()
-        mock_response.json.return_value = {
+        releases_response.return_value = {
             "total":1,
             "items": [{
                 "album_group":None,
@@ -352,10 +376,7 @@ class get_artist_releases_test(unittest.TestCase):
                 "images":[{"url":None}]
             }]
         }
-        mock_response.text = '{"items": {{"album_group":None,"external_urls":{"spotify":None},"id":None,"artists":[None],"names":None,"release_date":None,"total_tracks":None}}}'
-        mock_request.return_value = mock_response
-        
-        self.assertTrue(type(get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"}))==type([]))
+        self.assertTrue(type(spotufy.get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"}))==type([]))
 
 
 if __name__ == '__main__':

@@ -1,9 +1,4 @@
-import requests
-import dotenv
-import urllib.parse
-import re
-import json
-import lyricsgenius
+import requests, dotenv, urllib.parse, re, json, lyricsgenius
 from flask import redirect
 
 # Base API URL used for all API requests
@@ -139,15 +134,15 @@ def search_artists(api_token, input_artist):
         artists.append(artist_result)
     return artists
 
-def get_top_tracks(apiToken, artist_name):
+def get_top_tracks(api_token, artist_name):
     # Get the most popular tracks for a given artist
-    artists_got = search_artists(apiToken, artist_name)
+    artists_got = search_artists(api_token, artist_name)
     try:
         artist_id = artists_got[1]["id"]
     except TypeError:
         print("ERROR: Artist was not found.")
         return None
-    headers = {"Authorization": f"Bearer {apiToken}"}
+    headers = {"Authorization": f"Bearer {api_token}"}
     # URL encode artist string to ensure request executes properly
     query = urllib.parse.quote(artist_id)
     # Construct the query URL
@@ -224,12 +219,12 @@ def search_song_details(api_token, track, artist):
         track_results['image'] = "Image not found"
     return track_results
 
-def get_track_recs(apiToken, track, artist):
+def get_track_recs(api_token, track, artist):
     # Get a list of recommended tracks based on a single input track
     # URL encode track and artist strings to ensure request executes properly
     track_query = urllib.parse.quote(track)
     artist_query = urllib.parse.quote(artist)
-    headers = {"Authorization": f"Bearer {apiToken}"}
+    headers = {"Authorization": f"Bearer {api_token}"}
     # Construct the query URL to search for specified track by specified artist
     url = f"{APIURL}/search?q=track%3A{track_query}+artist%3A{artist_query}&type=track&limit=1"
     try:
