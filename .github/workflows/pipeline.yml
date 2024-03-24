@@ -31,7 +31,7 @@ jobs:
           type: now
           from_branch: main
           target_branch: docker
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.SYNC_BRANCH_PAT }}
           
       - uses: actions/checkout@v4
         with:
