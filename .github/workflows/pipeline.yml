@@ -1,4 +1,5 @@
-name: Docker Image CI
+# Credit for Docker image build + push to server: https://www.youtube.com/watch?v=f5AlQE0i5m0
+name: CI/CD Pipeline
 
 on:
   push: {}
