@@ -15,8 +15,4 @@ RUN pip3 install -r requirements.txt
 EXPOSE 8080
 
 # Start Gunicorn
-<<<<<<< HEAD
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
-=======
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
->>>>>>> 3f9f8e7eaf076fd30e5cd06291e5ec6634cc3ba3
