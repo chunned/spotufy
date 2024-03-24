@@ -1,9 +1,7 @@
 # Credit for Docker image build + push to server: https://www.youtube.com/watch?v=f5AlQE0i5m0
 name: CI/CD Pipeline
 
-on:
-  push: {}
-  pull_request: {}
+on: [workflow_dispatch, push, pull_request]
 
 env:
   REGISTRY: ghcr.io
