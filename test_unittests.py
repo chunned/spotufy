@@ -1,42 +1,7 @@
 import unittest
 import requests
 import spotufy
-import json
 from unittest.mock import patch
-
-# def testing_request_api_token(flask_app):
-#     # Authorization flow requires an HTTP callback
-#     # This test-specific setup function handles this flow without running app.py
-#     # This is a slightly modified version of spotufy.request_api_token() that doesn't use Flask
-
-#     app_client = flask_app.test_client()    # Create a Flask test client for the application
-#     api_secrets = dotenv.dotenv_values('.env')  # Read .env secrets
-#     client_id = api_secrets["CLIENT_ID"]
-#     client_secret = api_secrets["CLIENT_SECRET"]
-
-
-#     response = app_client.get('/login')
-#     auth_url = response.headers[2][1]        # Extract redirect URL from HTTP response headers
-#     # Open Spotify auth URL in web browser so user can authorize the app to act on their behalf
-#     webbrowser.open(auth_url)
-#     code = input("Enter the authorization code shown on the page: ")
-
-#     apiUrl = "https://accounts.spotify.com/api/token"
-#     encodedCreds = base64.b64encode(client_id.encode() + b':' + client_secret.encode()).decode("utf-8")
-#     apiHeaders = {"Content-Type": "application/x-www-form-urlencoded",
-#                   "Authorization": "Basic " + encodedCreds}
-#     apiData = {
-#         "grant_type": "authorization_code",
-#         "code": code,
-#         "redirect_uri": "https://ontario-tech-nits.github.io/final-project-group-1/index.html"
-#     }
-#     resp = requests.post(url=apiUrl, data=apiData, headers=apiHeaders)
-#     # Bytes to dict solution from https://stackoverflow.com/questions/49184578/how-to-convert-bytes-type-to-dictionary
-#     data = json.loads(resp.content.decode('utf-8'))
-#     return data['access_token']
-
-# token = testing_request_api_token(app)
-
 
 class make_api_call_test(unittest.TestCase):
     """Test module to test API call function in `spotufy.py`"""
@@ -44,8 +9,10 @@ class make_api_call_test(unittest.TestCase):
     @patch('spotufy.requests.request')
     def test_valid_return(self, mock_request):
         """Function should return a JSON object if given valid input"""
-        response_object = requests.models.Response()
-        response_object._content = str(json.dumps({"name": "Mock Track"})).encode('utf-8')
+        response_object = requests.Response()
+        # Override requests.Response().json() method using a lambda function
+        response_object.json = lambda: {"name": "Mock Track"}
+        response_object._content = b'{"name": "Mock Track"}'
         response_object.status_code = 200
         mock_request.return_value = response_object
         url = "https://api.spotify.com/v1/tracks/11dFghVXANMlKmJXsNCbNl"
