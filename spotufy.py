@@ -515,6 +515,9 @@ def get_artist_releases(api_token, artist):
     return releases
 
 def get_new_album_releases(api_token):
+    if not api_token:
+        print("ERROR: No API token provided.")
+        return None
     # Query new albums and return top 10 results
   
     headers = {"Authorization": f"Bearer {api_token}"}
