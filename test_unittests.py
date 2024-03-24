@@ -51,24 +51,46 @@ class parse_input_test(unittest.TestCase):
         response = spotufy.parse_input("ABxcII29238JJb")
         self.assertIsInstance(response, str)
 
+@patch('spotufy.make_api_call')
+@patch('spotufy.json.dumps')
+class create_playlist_test(unittest.TestCase):
+    """Test module to test create_playlist function in 'spotufy.py'"""
+    def test_valid_return(self, json_dump, api_request):
+        """Should return playlist URL if playlist is created successfully"""
+        user_id_query_response = {"id": "1234"}
+        create_playlist_response = {"id": "1234", "external_urls": {"spotify": "https://spotify.com/playlist"}}
+        insert_tracks_response = "playlist inserted"
+        api_request.side_effect = [user_id_query_response, create_playlist_response, insert_tracks_response]
 
+        json_response_a = '{"name": "playlist", "description": "new playlist"}'
+        json_response_b = '{"uris": ["spotify:track:6rqhFgbbKwnb9MLmUQDhG6""]}'
+        json_dump.side_effect = [json_response_a, json_response_b]
 
-# class create_playlist_test(unittest.TestCase):
-#     """Test module to test create_playlist function in 'spotufy.py'"""
-#     def test_valid_return(self):
-#         """Should return playlist URL if playlist is created successfully"""
-#         result = create_playlist(token, 'Test23', [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
-#         self.assertTrue(isinstance(result, str))
+        response = spotufy.create_playlist('token', 'Test23', [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
+        self.assertIsInstance(response, str)
+        self.assertTrue(len(response) > 0)
 
-#     def test_invalid_input_artist(self):
-#         """Should return None given invalid input playlist name"""
-#         result = create_playlist(token, [], [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
-#         self.assertTrue(result is None)
+    def test_invalid_input_playlist_name(self, placeholder1, placeholder2):
+        """Should return None given invalid input playlist name type"""
+        response = spotufy.create_playlist('token', [1], [{"uri":"spotify:track:6rqhFgbbKwnb9MLmUQDhG6"}])
+        self.assertTrue(response is None)
 
-#     def test_invalid_input_tracks(self):
-#         """Should return None given invalid input tracks"""
-#         result = create_playlist(token, 'Bob Marley', '')
-#         self.assertTrue(result is None)
+    def test_invalid_input_tracks(self, placeholder1, placeholder2):
+        """Should return None given invalid input tracks type"""
+        response = spotufy.create_playlist('token', 'Bob Marley', 1)
+        self.assertTrue(response is None)
+
+    def test_missing_token(self, placeholder1, placeholder2):
+        response = spotufy.create_playlist('', 'asdf', ['asdf'])
+        self.assertTrue(response is None)
+
+    def test_missing_artist(self, placeholder1, placeholder2):
+        response = spotufy.create_playlist('asdf', '', ['asdf'])
+        self.assertTrue(response is None)
+
+    def test_missing_tracks(self, placeholder1, placeholder2):
+        response = spotufy.create_playlist('asdf', 'asdf', [])
+        self.assertTrue(response is None)
 
 
 @patch('spotufy.make_api_call')
@@ -102,6 +124,15 @@ class search_artists_test(unittest.TestCase):
         response = spotufy.search_artists("token", "sdfouhxiuheiuwer")
         self.assertTrue(response is None)
 
+    def test_invalid_input_artist_type(self, placeholder):
+        """Should return None given the wrong type of input artist"""
+        response = spotufy.search_artists('token', ["a"])
+        self.assertTrue(response is None)
+
+    def test_invalid_input_artist(self, placeholder):
+        """Should return None given no input artist"""
+        response = spotufy.search_artists('token', '')
+        self.assertTrue(response is None)
 
 @patch('spotufy.make_api_call')
 class get_top_tracks_test(unittest.TestCase):
@@ -138,11 +169,14 @@ class get_top_tracks_test(unittest.TestCase):
         self.assertIsInstance(response, list)
         self.assertTrue(len(response) > 0)
 
-    def test_empty_input(self, api_response):
+    def test_empty_input(self, placeholder):
         """Function should return None if given bad input (artist parameter empty)"""
-        # make_api_call returns None because of 400 error
-        api_response.return_value = None 
         response = spotufy.get_top_tracks("token", "")
+        self.assertTrue(response is None)
+
+    def test_wrong_input_type(self, placeholder):
+        """Function should return None if given bad input (artist parameter empty)"""
+        response = spotufy.get_top_tracks("token", 1)
         self.assertTrue(response is None)
 
     def test_invalid_input(self, artists_response):
@@ -156,9 +190,24 @@ class get_top_tracks_test(unittest.TestCase):
 class search_song_details_test(unittest.TestCase):
     """Test module to test search song details function in `spotufy.py`"""
 
-    def test_blank_input(self, song_response):
-        """Function should return None if given empty input"""
-        response = spotufy.search_song_details("token", "", "")
+    def test_empty_input_artist(self, placeholder):
+        """Function should return None if given empty input artist"""
+        response = spotufy.search_song_details("token", "a", "")
+        self.assertTrue(response is None)
+
+    def test_empty_input_track(self, placeholder):
+        """Function should return None if given empty input track"""
+        response = spotufy.search_song_details("token", "", "a")
+        self.assertTrue(response is None)
+
+    def test_wrong_input_artist_type(self, placeholder):
+        """Function should return None if given empty input artist"""
+        response = spotufy.search_song_details("token", "a", 1)
+        self.assertTrue(response is None)
+
+    def test_wrong_input_track_type(self, placeholder):
+        """Function should return None if given empty input track"""
+        response = spotufy.search_song_details("token", 1, "a")
         self.assertTrue(response is None)
 
     def test_no_match(self, song_response):
@@ -204,31 +253,26 @@ class get_track_recs_test(unittest.TestCase):
                 }]
             }
         recommended_tracks.side_effect = [track_dict, recommended_tracks_dict]
-        result = spotufy.get_track_recs("token", 'Bend Down Low', 'Bob Marley')
-        self.assertIsInstance(result, list)
-        self.assertTrue(len(result) > 0)
-
+        response = spotufy.get_track_recs("token", 'Bend Down Low', 'Bob Marley')
+        self.assertIsInstance(response, list)
+        self.assertTrue(len(response) > 0)
 
     def test_invalid_input_token(self, api_response):
         """Should return None in the event of an invalid input token"""
-        # make_api_call returns none because of 401 error
-        api_response.return_value = None 
-        result = spotufy.get_track_recs('asdf', 'Rednecks', 'Randy Newman')
-        self.assertTrue(result is None)
+        response = spotufy.get_track_recs('', 'Rednecks', 'Randy Newman')
+        self.assertTrue(response is None)
 
     def test_invalid_input_track(self, api_response):
         """Should return None in the event of an invalid input track"""
-        # make_api_call returns none because of 400 error
-        api_response.return_value = None 
-        result = spotufy.get_track_recs("token", '', 'Josh Lowe')
-        self.assertTrue(result is None)
+        response = spotufy.get_track_recs("token", '', 'Josh Lowe')
+        self.assertTrue(response is None)
 
     def test_invalid_input_artist(self, api_response):
         """Should return None in the event of an invalid input artist"""
         # make_api_call returns none because of 400 error
         api_response.return_value = None 
-        result = spotufy.get_track_recs("token", 'DevOps', '')
-        self.assertTrue(result is None)
+        response = spotufy.get_track_recs("token", 'DevOps', '')
+        self.assertTrue(response is None)
 
 
 @patch('spotufy.make_api_call')
@@ -250,16 +294,14 @@ class get_user_recs_test(unittest.TestCase):
                 }]
             }
         recommended_tracks.side_effect = [listened_tracks_dict, recommended_tracks_dict]
-        result = spotufy.get_user_recs("token")
-        self.assertIsInstance(result, list)
-        self.assertTrue(len(result) > 0)
+        response = spotufy.get_user_recs("token")
+        self.assertIsInstance(response, list)
+        self.assertTrue(len(response) > 0)
 
-    def test_invalid_input(self, api_response):
+    def test_missing_token(self, placeholder):
         """Should return None in the event of an invalid input token"""
-        # make_api_call returns none because of 401 error
-        api_response.return_value = None 
-        result = spotufy.get_user_recs('asdf')
-        self.assertTrue(result is None)
+        response = spotufy.get_user_recs('')
+        self.assertTrue(response is None)
 
 
 @patch('spotufy.make_api_call')
@@ -275,6 +317,13 @@ class get_related_artists_test(unittest.TestCase):
             self.assertIsInstance(response, list)
             self.assertTrue(len(response) > 0)
 
+    def test_missing_token(self, placeholder):
+        response = spotufy.get_related_artists("", "123")
+        self.assertTrue(response is None)
+
+    def test_missing_input_artist_id(self, placeholder):
+        response = spotufy.get_related_artists("123", "")
+        self.assertTrue(response is None)
 
     def test_no_response(self, api_response):
         """Should return None if no response obtained"""
@@ -335,7 +384,7 @@ class get_genius_lyrics_test(unittest.TestCase):
 class get_artist_releases_test(unittest.TestCase):
     """Test module to test get artist releases function in `spotufy.py`"""
 
-    def test_invalid_artist_input(self, releases_response):
+    def test_invalid_artist_input(self, placeholder):
         """Function should return None when not given an artist ID item as returned by `search_artists()`"""
         response = spotufy.get_artist_releases("token", "Al Green")
         self.assertTrue(response is None)
@@ -364,6 +413,14 @@ class get_artist_releases_test(unittest.TestCase):
         response = spotufy.get_artist_releases("token", {"name": "Al Green", "id": "3dkbV4qihUeMsqN4vBGg93"})
         self.assertIsInstance(response, list)
         self.assertTrue(len(response) > 0)
+
+    def test_missing_token(self, placeholder):
+        response = spotufy.get_artist_releases('', 'asdf')
+        self.assertTrue(response is None)
+
+    def test_missing_artist(self, placeholder):
+        response = spotufy.get_artist_releases("asdf", '')
+        self.assertTrue(response is None)
 
 
 if __name__ == '__main__':
