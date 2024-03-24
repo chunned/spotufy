@@ -4,6 +4,7 @@ name: CI/CD Pipeline
 on:
   push: {}
   pull_request: {}
+  workflow_deploy: {}
 
 env:
   REGISTRY: ghcr.io
@@ -27,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 'docker'
+          ref: 'main'
       - name: Login
         run: echo ${{ secrets.PAT }} | docker login ghcr.io -u chunned --password-stdin
 
