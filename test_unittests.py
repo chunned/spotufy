@@ -426,30 +426,34 @@ class get_artist_releases_test(unittest.TestCase):
 @patch('spotufy.make_api_call')
 class get_new_album_releases_test(unittest.TestCase):
     """Test module to test get new releases function in `spotufy.py`"""
-    def test_valid_return(self, api_request):
-        # Should return a non-empty list given valid input
-        api_request.return_value = {"albums": {"items": [
-            {"uri":"asdf",
-             "external_urls": {"spotify": "https://"},
-             "album_type": "album",
-             "total_tracks": 5,
-             "name": "The Album",
-             "release_date": "2024/03/01",
-             "images": ["image.com"]
-             }]}}
+    def test_valid_return(self, api_response):
+        """Should return a non-empty list given valid input"""
+        api_response.return_value = {
+            "albums": {
+                "items": [
+                    {"uri":"asdf",
+                    "external_urls": {"spotify": "https://"},
+                    "album_type": "album",
+                    "total_tracks": 5,
+                    "name": "The Album",
+                    "release_date": "2024/03/01",
+                    "images": ["image.com"]}
+                ]
+            }
+        }
 
         response = spotufy.get_new_album_releases("token")
         self.assertIsInstance(response, list)
         self.assertTrue(len(response) > 0)
 
     def test_missing_token(self, placeholder):
-        # Should return None if token is missing
+        """Should return None if token is missing"""
         response = spotufy.get_new_album_releases("")
         self.assertTrue(response is None)
 
-    def test_no_response(self, api_request):
-        # Should return None if no API response observed
-        api_request.return_value = None
+    def test_no_response(self, api_response):
+        """Should return None if no API response observed"""
+        api_response.return_value = None
         response = spotufy.get_new_album_releases("asdf")
         self.assertTrue(response is None)
 
