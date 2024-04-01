@@ -4,3 +4,4 @@ test.py
 __pycache__
 virtual-env/
 docker-run.sh
+.github/workflows
