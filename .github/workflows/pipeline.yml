@@ -26,6 +26,7 @@ jobs:
       - run: python -m pip install pytest pylint
       - run: python -m pip install -r requirements.txt
       - run: python -m pytest
+      - run: pylint --disable=C0114,C0115,C0116 --exit-zero
       - run: pylint *.py
   
   publish-docker:
