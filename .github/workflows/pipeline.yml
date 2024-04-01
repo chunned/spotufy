@@ -1,7 +1,12 @@
 # Credit for Docker image build + push to server: https://www.youtube.com/watch?v=f5AlQE0i5m0
 name: CI/CD Pipeline
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches-ignore:
+      - 'docker'   # Exclude Docker branch to prevent each push from executing 2 separate workflows.
+  pull_request:
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
