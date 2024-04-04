@@ -11,6 +11,8 @@ There are two options for deployment:
 - Clone this branch (main), place the `.env` file we submitted to Canvas in the repository directory, install the required packages with Pip, then simply `python3 app.py`
 - Alternatively, use the `docker-compose.yml` we submitted to Canvas. `docker compose up`
 
+Deploying locally will simply involve running the Flask application, and uses the Flask server. The Docker image is meant to be the "production" deployment and uses Gunicorn as the web server, with Nginx added to proxy incoming connections.
+
 Either way, visit `http://localhost:9191` to access the application.
 
 # Self-Hosting
@@ -53,4 +55,14 @@ Generating a Genius API access token is a similar process to Spotify but slightl
 - Search artist discography
 
 
+# CI/CD Pipeline 
+The pipeline used for this project can be found at [.github/workflows/pipeline.yml](.github/workflows/pipeline.yml). The pipeline contains three jobs: `test-code`, `publish-docker`, and `deploy` and is triggered on any pull request or push (except for the `docker` branch itself, more info below) and can also be manually dispatched. 
 
+- `test-code` runs `test_unittests.py` on `main.py` using `pytest`. See `test_unittests.py` for more information on how each unit test works
+- `publish-docker` builds and publishes a new Docker image to GitHub Container Registry through the below steps
+  - Merges the `main` branch into the `docker` branch
+    - This step is why the `docker` branch is excluded from triggering the workflow on push. Without that exclusion, a duplicate job would be run. Apart from being a waste, this can also cause issues with the deployment if both jobs are executing simultaneously. 
+  - Logs into ghcr.io
+  - Builds the new Docker image 
+  - Pushes it to ghcr.io 
+- `deploy-image` first installs the predefined SSH keys to the Ubuntu runner, then creates an SSH session to the VPS that hosts [the public deployment](https://spotufy.chunned.ca), pulls the newly created Docker image, and runs `docker compose up` to (re)start the application.
