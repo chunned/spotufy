@@ -39,6 +39,8 @@ Put both files in the same directory and set the following values:
 ## Obtaining Genius.com API token
 Generating a Genius API access token is a similar process to Spotify but slightly less involved. Visit the [API Client management page](http://genius.com/api-clients), create a new API client, set the name and website to anything, then click **Generate Access Token**.
 
+Disclaimer: if you intend to use the GitHub Actions workflow for a public deployment, be aware that the LyricsGenius library for the Genius API is [only functional locally](https://github.com/johnwmillr/LyricsGenius/issues/220).
+
 # Features 
 ## Backlog
 - Get artist new/upcoming releases
