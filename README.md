@@ -10,7 +10,7 @@ Public deployment available [here](https://spotufy.chunned.ca).
 There are two options for deployment:
 
 - Clone this branch (main), place the `.env` file we submitted to Canvas in the repository directory, install the required packages with Pip, then simply `python3 app.py`
-- Alternatively, use the `docker-compose.yml` we submitted to Canvas. `docker compose up`
+- ~Alternatively, use the `docker-compose.yml` we submitted to Canvas. `docker compose up`~ The Docker branch has changed so the old Compose file will no longer work.
 
 Deploying locally will simply involve running the Flask application, and uses the Flask server. The Docker image is meant to be the "production" deployment and uses Gunicorn as the web server, with Nginx added to proxy incoming connections.
 
