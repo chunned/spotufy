@@ -2,7 +2,7 @@
 
 SpOTUfy is an application for the purpose of providing greater value to the everyday Spotify user who wants to get more out of their experience. 
 
-Public deployment available [here](https://spotufy.chunned.ca).
+~~Public deployment available [here](https://spotufy.chunned.ca).~~ No longer available as of May 2024.
 
 ![](static/homepage.gif)
 
