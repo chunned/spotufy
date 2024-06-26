@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="spotufy"> 
+        <h1><span class="auto-type"></span> </h1>
+    </div> 
+    <div class="spotufy_body"> 
+        <p1> SpOTUfy is an application for the purpose of providing greater value to Spotify 
+            users who wants to get more out of their experience.</p1>
+    </div> 
+    <!-- Video source used for code below : https://www.youtube.com/watch?v=IbGSsy17Ass -->
+    <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+    <script>
+        var typed = new Typed(".auto-type",{
+            strings : ["Spotify","Sp<span class='otu_green'>OTU</span>fy"],
+            typeSpeed : 110,
+            backSpeed : 110,
+        })
+        </script>
+{% endblock content %}

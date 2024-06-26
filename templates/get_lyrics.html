@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="">    
+        <div class="contents">    
+            <h1>Lyrics for "{{name|title}}" by {{artist|title}}  </h1>
+            <!--- for loop to print out all the elements from the tracks list in the spotufy.py file -->
+        </div>
+        <hr>
+        {% for lyric in lyrics.split("\n") %}
+        <div class="artist_output">
+            <div class="text">
+              <p> {{ lyric }} </p>
+            </div>
+        </div>
+        {% endfor %}
+        <hr>
+    </div>
+{% endblock content %}

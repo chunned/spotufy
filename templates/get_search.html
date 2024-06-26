@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="main_body">    
+        <h1> Top Matches for {{matched_artist|title}} </h1>
+        <!--- for loop to print out all the elements from the artists list, [1:] indicates that it should start at index 1-->
+        
+        <hr>
+        {% for artist in artists[1:] %} 
+        <div class="artist_output">
+            <div class="text">
+                <p>Result #{{ loop.index}}</p> 
+                <p>Name: {{ artist['name'] }}</p>
+                <p>Followers: {{ artist['followers'] }}</p>
+                <p>Genre(s): {{ artist['genres'] }}</p>
+                <p><a href="{{ artist['url'] }}"> Open in Browser  </a> </p>
+                <p><a href="{{ artist['uri'] }}"> Open in Spotify App </a> </p>
+            </div>
+            <img src="{{ artist['imageUrl'] }}" alt="Image Not Found" class="artist_image">
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+{% endblock content %}

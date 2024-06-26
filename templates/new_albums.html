@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="">    
+        <h1> New Album Releases on Spotify </h1>
+        <!--- for loop to print out all the elements from the tracks list in the spotufy.py file -->
+        <hr>
+        {% for albums in album %} 
+        <div class="artist_output">
+            <div class="text">
+                <p> Name: {{ albums['name'] }}</p>
+                <p> Album Type : {{ albums['album_type']|title }}</p>
+                <p> Total Tracks : {{ albums['total_tracks'] }}</p>
+                <p> Release Date : {{ albums['release_date'] }}</p>
+                <p><a href="{{ albums['url'] }}"> Open in Browser  </a> </p>
+                <p><a href="{{ albums['uri'] }}"> Open in Spotify App </a> </p>
+            </div>
+            <img src="{{ albums['imageUrl']['url'] }}" alt="Artist Image" class="artist_image">
+        </div>
+        <hr>
+        {% endfor %}
+        </div>
+        <hr>
+        
+    </div>
+{% endblock content %}

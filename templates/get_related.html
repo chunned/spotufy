@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="main_body">    
+        <h1> Similar Artists to {{matched_artist|title}} </h1>
+        <!--- for loop to print out all the elements from the artists list, [1:] indicates that it should start at index 1-->
+        
+        <hr>
+        {% for artist in related_artists %} 
+        <div class="artist_output">
+            <div class="text">
+                <p>Name: {{ artist[1]['name'] }}</p>
+                <p>Followers: {{ artist[1]['followers'] }}</p>
+                <p>Genre(s): {{ artist[1]['genres'] }}</p>
+                <p>Popularity: {{ artist[1]['popularity'] }}</p>
+                <p><a href="{{ artist[1]['url'] }}"> Open in Browser  </a> </p>
+                <p><a href="{{ artist[1]['uri'] }}"> Open in Spotify App </a> </p>
+            </div>
+            <img src="{{ artist[1]['imageUrl'] }}" alt="Image Not Found" class="artist_image">
+        </div>
+        <hr>
+        {% endfor %}
+    </div>
+{% endblock content %}

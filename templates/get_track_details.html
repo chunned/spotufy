@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="">    
+        <h1> {{name|title}} by {{artist|title}}     </h1>
+        <!--- for loop to print out all the elements from the tracks list in the spotufy.py file -->
+        <hr>
+        <div class="artist_output">
+            <div class="text">
+                <p>Name: {{ tracks['name'] }}</p>
+                <p>Album: {{ tracks['album'] }}</p>
+                <p> Artist: {{ tracks['artist'] }}</p>
+                <p> Duration: {{ tracks['duration'] }} (s)</p>
+                <p> Released: {{ tracks['released'] }}</p>
+                <p><a href="{{ tracks['url'] }}"> Open in Browser  </a> </p>
+                <p><a href="{{ tracks['uri'] }}"> Open in Spotify App </a> </p>
+               
+            </div>
+            <img src="{{ tracks['image'] }}" alt="Artist Image" class="artist_image">
+        </div>
+        <hr>
+        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/{{tracks['id']}}?utm_source=generator&theme=0" 
+        width="100%" height="152" frameBorder="0" allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+        loading="lazy"></iframe>
+    </div>
+{% endblock content %}

@@ -1,0 +1,67 @@
+# Credit for Docker image build + push to server: https://www.youtube.com/watch?v=f5AlQE0i5m0
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches-ignore:
+      - 'docker'   # Exclude Docker branch to prevent each push from executing 2 separate workflows.
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: chunned/spotufy:latest
+  
+jobs:
+  test-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 'main'
+      - uses: actions/setup-python@v5.0.0
+        with:
+          python-version: '3.10'
+      - run: python -m ensurepip --upgrade     # Make sure latest version of Pip is installed - from https://pip.pypa.io/en/stable/installation/
+      - run: python -m pip install pytest pylint
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest
+      - run: pylint --disable=C0114,C0115,C0116 --exit-zero *.py || true # see https://github.com/actions/starter-workflows/issues/2303
+  
+  publish-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge main -> docker 
+        uses: devmasx/merge-branch@1.4.0
+        with:
+          type: now
+          from_branch: main
+          target_branch: docker
+          github_token: ${{ secrets.SYNC_BRANCH_PAT }}
+          
+      - uses: actions/checkout@v4
+        with:
+          ref: 'docker'
+      - name: Login
+        run: echo ${{ secrets.PAT }} | docker login ghcr.io -u chunned --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build . -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+  deploy:
+    needs: publish-docker
+    name: deploy-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: install SSH keys
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+      - name: Connect to VPS, pull repo, deploy Docker container
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && docker compose pull && docker compose up -d && exit"
+
+      - name: cleanup
+        run: rm -rf ~/.ssh
